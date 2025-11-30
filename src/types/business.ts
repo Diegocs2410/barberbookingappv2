@@ -19,7 +19,7 @@ export interface Business {
 	name: string
 	address: string
 	phone: string
-	logoUrl?: string
+	logoUrl?: string | null
 	description?: string
 	ownerId: string
 	subscriptionStatus: 'active' | 'trial' | 'expired' | 'cancelled'
@@ -33,7 +33,7 @@ export interface Barber {
 	userId: string
 	businessId: string
 	name: string
-	photoUrl?: string
+	photoUrl?: string | null
 	specialties: string[]
 	isActive: boolean
 	createdAt: Date

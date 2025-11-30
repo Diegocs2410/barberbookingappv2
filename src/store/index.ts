@@ -11,20 +11,9 @@ export const store = configureStore({
 	},
 	middleware: (getDefaultMiddleware) =>
 		getDefaultMiddleware({
-			serializableCheck: {
-				// Ignore these action types
-				ignoredActions: ['auth/setUser', 'booking/setBookings'],
-				// Ignore these field paths in all actions
-				ignoredActionPaths: ['payload.createdAt', 'payload.updatedAt', 'payload.dateTime'],
-				// Ignore these paths in the state
-				ignoredPaths: [
-					'auth.user.createdAt',
-					'auth.user.updatedAt',
-					'business.currentBusiness.createdAt',
-					'business.currentBusiness.updatedAt',
-					'booking.bookings',
-				],
-			},
+			// Disable serializable check - we use Date objects throughout
+			// which are safe but not serializable by Redux's strict standards
+			serializableCheck: false,
 		}),
 })
 

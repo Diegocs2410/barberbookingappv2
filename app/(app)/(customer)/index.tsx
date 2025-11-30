@@ -16,13 +16,16 @@ import { colors, spacing, borderRadius } from '../../../src/constants/theme'
 import { Business } from '../../../src/types'
 
 export default function DiscoverScreen() {
-	const { businesses, isLoading, loadAllBusinesses } = useBusiness()
+	const { businesses, isLoading, error, loadAllBusinesses } = useBusiness()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [refreshing, setRefreshing] = useState(false)
 
 	useEffect(() => {
-		loadAllBusinesses()
-	}, [])
+		// Always try to load, the slice handles caching
+		loadAllBusinesses().catch((err) => {
+			console.error('Error loading businesses:', err)
+		})
+	}, [loadAllBusinesses])
 
 	const onRefresh = async () => {
 		setRefreshing(true)
@@ -75,7 +78,8 @@ export default function DiscoverScreen() {
 		</Card>
 	)
 
-	if (isLoading && !refreshing && businesses.length === 0) {
+	// Only show loading on first load when no businesses exist and no error
+	if (isLoading && businesses.length === 0 && !refreshing && !error) {
 		return <LoadingScreen message="Finding barbershops..." />
 	}
 

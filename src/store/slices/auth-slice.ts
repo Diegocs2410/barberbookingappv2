@@ -4,7 +4,7 @@ import * as authService from '../../services/auth-service'
 
 const initialState: AuthState = {
     user: null,
-    isLoading: false,
+    isLoading: true, // Start loading until Firebase auth check completes
     isAuthenticated: false,
     error: null,
 }

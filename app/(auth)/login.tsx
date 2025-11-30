@@ -92,6 +92,8 @@ export default function LoginScreen() {
 								onChangeText={onChange}
 								placeholder="Enter your password"
 								secureTextEntry={!showPassword}
+								textContentType="oneTimeCode"
+								autoComplete="off"
 								error={errors.password?.message ?? ''}
 							/>
 						)}

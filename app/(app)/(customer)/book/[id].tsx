@@ -29,7 +29,9 @@ function getNextDays(count: number) {
 }
 
 function getDayOfWeek(dateString: string): string {
-	const date = new Date(dateString)
+	// Parse date string as local time (not UTC) for consistency
+	const [year, month, day] = dateString.split('-').map(Number)
+	const date = new Date(year, month - 1, day)
 	const days = [
 		'sunday',
 		'monday',
@@ -77,15 +79,19 @@ export default function BookingScreen() {
 			const dayOfWeek = getDayOfWeek(selectedDate) as keyof typeof currentBusiness.workingHours
 			const workingHours = currentBusiness.workingHours[dayOfWeek]
 
+			// Parse date string as local time (not UTC)
+			const [year, month, day] = selectedDate.split('-').map(Number)
+			const localDate = new Date(year, month - 1, day)
+
 			loadAvailableSlots(
 				selectedBarberId,
 				currentBusiness.id,
-				new Date(selectedDate),
+				localDate,
 				selectedService.duration,
 				workingHours
 			)
 		}
-	}, [selectedDate, selectedBarberId, selectedServiceId, currentBusiness])
+	}, [selectedDate, selectedBarberId, selectedServiceId, currentBusiness, selectedService, loadAvailableSlots])
 
 	const handleDateSelect = (dateString: string) => {
 		selectDate(dateString)
@@ -113,8 +119,9 @@ export default function BookingScreen() {
 
 		try {
 			const [hours, minutes] = selectedTimeSlot.split(':').map(Number)
-			const dateTime = new Date(selectedDate)
-			dateTime.setHours(hours, minutes, 0, 0)
+			// Parse date string as local time (not UTC)
+			const [year, month, day] = selectedDate.split('-').map(Number)
+			const dateTime = new Date(year, month - 1, day, hours, minutes, 0, 0)
 
 			await createBooking({
 				businessId: currentBusiness.id,

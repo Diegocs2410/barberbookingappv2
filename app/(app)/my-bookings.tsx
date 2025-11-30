@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native'
+import { View, StyleSheet, FlatList, RefreshControl, Alert, Pressable } from 'react-native'
 import { Text, SegmentedButtons } from 'react-native-paper'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -128,12 +128,11 @@ export default function MyBookingsScreen() {
 
 				{canCancel && (
 					<View style={styles.bookingActions}>
-						<Text
-							style={styles.cancelButton}
-							onPress={() => handleCancelBooking(item.id)}
-						>
-							Cancel Booking
-						</Text>
+						<Pressable onPress={() => handleCancelBooking(item.id)}>
+							<Text style={styles.cancelButton}>
+								Cancel Booking
+							</Text>
+						</Pressable>
 					</View>
 				)}
 			</Card>

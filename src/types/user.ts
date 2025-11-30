@@ -5,7 +5,7 @@ export interface User {
 	email: string
 	name: string
 	phone?: string
-	photoUrl?: string
+	photoUrl?: string | null
 	role: UserRole
 	businessId?: string
 	createdAt: Date

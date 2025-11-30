@@ -38,7 +38,7 @@ export async function createBusiness(
 	
 	const businessData: Omit<Business, 'id'> = {
 		...data,
-		logoUrl: undefined,
+		logoUrl: null,
 		ownerId,
 		subscriptionStatus: 'trial',
 		workingHours: DEFAULT_WORKING_HOURS,
@@ -46,11 +46,20 @@ export async function createBusiness(
 		updatedAt: new Date(),
 	}
 
-	await setDoc(businessRef, {
-		...businessData,
+	// Prepare Firestore data (exclude undefined values)
+	const firestoreData: Record<string, unknown> = {
+		name: data.name,
+		address: data.address,
+		phone: data.phone,
+		description: data.description,
+		ownerId,
+		subscriptionStatus: 'trial',
+		workingHours: DEFAULT_WORKING_HOURS,
 		createdAt: serverTimestamp(),
 		updatedAt: serverTimestamp(),
-	})
+	}
+
+	await setDoc(businessRef, firestoreData)
 
 	return { id: businessRef.id, ...businessData }
 }
@@ -83,15 +92,15 @@ export async function getBusiness(businessId: string): Promise<Business | null> 
  * Gets all businesses (for customer discovery)
  */
 export async function getAllBusinesses(): Promise<Business[]> {
+	// Simple query without composite index requirement
 	const q = query(
 		collection(db, 'businesses'),
-		where('subscriptionStatus', 'in', ['active', 'trial']),
-		orderBy('name')
+		where('subscriptionStatus', 'in', ['active', 'trial'])
 	)
 	
 	const snapshot = await getDocs(q)
 	
-	return snapshot.docs.map((doc) => {
+	const businesses = snapshot.docs.map((doc) => {
 		const data = doc.data()
 		return {
 			id: doc.id,
@@ -107,6 +116,9 @@ export async function getAllBusinesses(): Promise<Business[]> {
 			updatedAt: data.updatedAt?.toDate() || new Date(),
 		}
 	})
+	
+	// Sort by name in JavaScript (avoids needing composite index)
+	return businesses.sort((a, b) => a.name.localeCompare(b.name))
 }
 
 /**
@@ -164,9 +176,10 @@ export async function addBarber(
 	const barberRef = await addDoc(
 		collection(db, 'businesses', businessId, 'barbers'),
 		{
-			...data,
+			userId: data.userId,
+			name: data.name,
+			specialties: data.specialties,
 			businessId,
-			photoUrl: undefined,
 			isActive: true,
 			createdAt: serverTimestamp(),
 		}

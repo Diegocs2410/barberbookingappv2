@@ -36,17 +36,28 @@ export async function signUp(
 		email: firebaseUser.email!,
 		name,
 		phone: '',
-		photoUrl: firebaseUser.photoURL || undefined,
+		photoUrl: firebaseUser.photoURL || null,
 		role: 'customer', // Default role, will be updated after role selection
 		createdAt: new Date(),
 		updatedAt: new Date(),
 	}
 
-	await setDoc(doc(db, 'users', firebaseUser.uid), {
-		...userData,
+	// Prepare data for Firestore (exclude undefined values)
+	const firestoreData: Record<string, unknown> = {
+		email: userData.email,
+		name: userData.name,
+		phone: userData.phone,
+		role: userData.role,
 		createdAt: serverTimestamp(),
 		updatedAt: serverTimestamp(),
-	})
+	}
+	
+	// Only add photoUrl if it exists
+	if (firebaseUser.photoURL) {
+		firestoreData.photoUrl = firebaseUser.photoURL
+	}
+
+	await setDoc(doc(db, 'users', firebaseUser.uid), firestoreData)
 
 	return { id: firebaseUser.uid, ...userData }
 }

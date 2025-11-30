@@ -22,6 +22,7 @@ export function useAuth() {
 	// Listen to Firebase auth state changes
 	useEffect(() => {
 		let isMounted = true
+		let hasCheckedAuth = false
 
 		const unsubscribe = onAuthChange(async (firebaseUser) => {
 			if (!isMounted) return
@@ -29,18 +30,39 @@ export function useAuth() {
 			if (firebaseUser) {
 				try {
 					const userData = await getCurrentUser()
-					if (isMounted) dispatch(setUser(userData))
+					if (isMounted) {
+						dispatch(setUser(userData))
+					}
 				} catch (err) {
 					console.error('Error fetching user data:', err)
-					if (isMounted) dispatch(setUser(null))
+					if (isMounted) {
+						dispatch(setUser(null))
+					}
 				}
 			} else {
-				dispatch(setUser(null))
+				if (isMounted) {
+					dispatch(setUser(null))
+				}
+			}
+			
+			// After first auth check, stop loading
+			if (!hasCheckedAuth) {
+				hasCheckedAuth = true
+				if (isMounted) dispatch(setLoading(false))
 			}
 		})
 
+		// Timeout fallback in case Firebase auth is slow
+		const timeout = setTimeout(() => {
+			if (!hasCheckedAuth && isMounted) {
+				hasCheckedAuth = true
+				dispatch(setLoading(false))
+			}
+		}, 3000)
+
 		return () => {
 			isMounted = false
+			clearTimeout(timeout)
 			unsubscribe()
 		}
 	}, [dispatch])

@@ -114,6 +114,8 @@ export default function RegisterScreen() {
 								onChangeText={onChange}
 								placeholder="Create a password"
 								secureTextEntry
+								textContentType="oneTimeCode"
+								autoComplete="off"
 								error={errors.password?.message ?? ''}
 							/>
 						)}
@@ -129,6 +131,8 @@ export default function RegisterScreen() {
 								onChangeText={onChange}
 								placeholder="Confirm your password"
 								secureTextEntry
+								textContentType="oneTimeCode"
+								autoComplete="off"
 								error={errors.confirmPassword?.message ?? ''}
 							/>
 						)}
