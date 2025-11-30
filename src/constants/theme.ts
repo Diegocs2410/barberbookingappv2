@@ -1,42 +1,50 @@
 import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper'
 
-// Color palette inspired by modern barbershop aesthetics
+/**
+ * Paleta de colores monocromática elegante
+ * Diseño minimalista blanco y negro con acentos sutiles
+ */
 export const colors = {
-	// Primary - Deep navy/midnight
-	primary: '#1a1a2e',
-	primaryLight: '#16213e',
-	primaryDark: '#0f0f1a',
+	// Primary - Negro puro para elementos principales
+	primary: '#000000',
+	primaryLight: '#1a1a1a',
+	primaryDark: '#000000',
 
-	// Accent - Vibrant coral/red
-	accent: '#e94560',
-	accentLight: '#ff6b6b',
-	accentDark: '#c73e54',
+	// Accent - Negro para acciones y énfasis
+	accent: '#000000',
+	accentLight: '#333333',
+	accentDark: '#000000',
 
-	// Secondary - Gold/amber
-	secondary: '#f4a261',
-	secondaryLight: '#f4c088',
-	secondaryDark: '#e07b3d',
+	// Secondary - Gris medio para elementos secundarios
+	secondary: '#666666',
+	secondaryLight: '#888888',
+	secondaryDark: '#444444',
 
-	// Neutrals
-	background: '#0f0f1a',
-	surface: '#1a1a2e',
-	surfaceVariant: '#252542',
-	card: '#1e1e36',
+	// Neutrals - Fondos y superficies
+	background: '#ffffff',
+	surface: '#ffffff',
+	surfaceVariant: '#f8f8f8',
+	card: '#ffffff',
 
 	// Text
-	textPrimary: '#ffffff',
-	textSecondary: '#a0a0b2',
-	textMuted: '#6b6b7d',
+	textPrimary: '#000000',
+	textSecondary: '#666666',
+	textMuted: '#999999',
 
-	// Status
-	success: '#2ecc71',
-	warning: '#f39c12',
-	error: '#e74c3c',
-	info: '#3498db',
+	// Status - Colores funcionales sutiles
+	success: '#22c55e',
+	warning: '#f59e0b',
+	error: '#ef4444',
+	info: '#3b82f6',
 
-	// Borders
-	border: '#2a2a4a',
-	borderLight: '#3a3a5a',
+	// Borders - Bordes sutiles
+	border: '#e5e5e5',
+	borderLight: '#f0f0f0',
+	borderDark: '#d4d4d4',
+
+	// Overlays
+	overlay: 'rgba(0, 0, 0, 0.5)',
+	shadow: 'rgba(0, 0, 0, 0.08)',
 }
 
 export const spacing = {
@@ -53,6 +61,7 @@ export const borderRadius = {
 	md: 8,
 	lg: 12,
 	xl: 16,
+	xxl: 24,
 	full: 9999,
 }
 
@@ -71,48 +80,78 @@ export const typography = {
 		xxl: 24,
 		xxxl: 32,
 	},
+	fontWeight: {
+		regular: '400' as const,
+		medium: '500' as const,
+		semibold: '600' as const,
+		bold: '700' as const,
+	},
+}
+
+export const shadows = {
+	sm: {
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 1 },
+		shadowOpacity: 0.05,
+		shadowRadius: 2,
+		elevation: 1,
+	},
+	md: {
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.08,
+		shadowRadius: 4,
+		elevation: 2,
+	},
+	lg: {
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.1,
+		shadowRadius: 8,
+		elevation: 4,
+	},
 }
 
 export const darkTheme = {
 	...MD3DarkTheme,
 	colors: {
 		...MD3DarkTheme.colors,
-		primary: colors.accent,
-		primaryContainer: colors.primaryLight,
-		secondary: colors.secondary,
-		secondaryContainer: colors.secondaryDark,
-		tertiary: colors.accent,
-		tertiaryContainer: colors.accentDark,
-		surface: colors.surface,
-		surfaceVariant: colors.surfaceVariant,
-		background: colors.background,
+		primary: '#ffffff',
+		primaryContainer: '#1a1a1a',
+		secondary: '#888888',
+		secondaryContainer: '#333333',
+		tertiary: '#ffffff',
+		tertiaryContainer: '#1a1a1a',
+		surface: '#0a0a0a',
+		surfaceVariant: '#141414',
+		background: '#000000',
 		error: colors.error,
 		errorContainer: colors.error,
-		onPrimary: colors.textPrimary,
-		onPrimaryContainer: colors.textPrimary,
-		onSecondary: colors.primary,
-		onSecondaryContainer: colors.textPrimary,
-		onTertiary: colors.textPrimary,
-		onTertiaryContainer: colors.textPrimary,
-		onSurface: colors.textPrimary,
-		onSurfaceVariant: colors.textSecondary,
-		onError: colors.textPrimary,
-		onErrorContainer: colors.textPrimary,
-		onBackground: colors.textPrimary,
-		outline: colors.border,
-		outlineVariant: colors.borderLight,
+		onPrimary: '#000000',
+		onPrimaryContainer: '#ffffff',
+		onSecondary: '#000000',
+		onSecondaryContainer: '#ffffff',
+		onTertiary: '#000000',
+		onTertiaryContainer: '#ffffff',
+		onSurface: '#ffffff',
+		onSurfaceVariant: '#888888',
+		onError: '#ffffff',
+		onErrorContainer: '#ffffff',
+		onBackground: '#ffffff',
+		outline: '#333333',
+		outlineVariant: '#222222',
 		shadow: '#000000',
 		scrim: '#000000',
-		inverseSurface: colors.textPrimary,
-		inverseOnSurface: colors.primary,
-		inversePrimary: colors.accentDark,
+		inverseSurface: '#ffffff',
+		inverseOnSurface: '#000000',
+		inversePrimary: '#000000',
 		elevation: {
 			level0: 'transparent',
-			level1: colors.surface,
-			level2: colors.surfaceVariant,
-			level3: colors.card,
-			level4: colors.card,
-			level5: colors.card,
+			level1: '#0a0a0a',
+			level2: '#141414',
+			level3: '#1a1a1a',
+			level4: '#222222',
+			level5: '#2a2a2a',
 		},
 	},
 }
@@ -122,26 +161,25 @@ export const lightTheme = {
 	colors: {
 		...MD3LightTheme.colors,
 		primary: colors.primary,
-		primaryContainer: '#e8e8f0',
+		primaryContainer: '#f5f5f5',
 		secondary: colors.secondary,
-		secondaryContainer: '#fff4e6',
-		tertiary: colors.accent,
-		tertiaryContainer: '#ffe8ec',
-		surface: '#ffffff',
-		surfaceVariant: '#f5f5f8',
-		background: '#fafafa',
+		secondaryContainer: '#f0f0f0',
+		tertiary: colors.primary,
+		tertiaryContainer: '#f5f5f5',
+		surface: colors.surface,
+		surfaceVariant: colors.surfaceVariant,
+		background: colors.background,
 		error: colors.error,
 		onPrimary: '#ffffff',
 		onPrimaryContainer: colors.primary,
-		onSecondary: colors.primary,
-		onSecondaryContainer: colors.secondaryDark,
+		onSecondary: '#ffffff',
+		onSecondaryContainer: colors.secondary,
 		onTertiary: '#ffffff',
-		onTertiaryContainer: colors.accentDark,
-		onSurface: colors.primary,
-		onSurfaceVariant: colors.textMuted,
-		onBackground: colors.primary,
-		outline: '#d0d0d8',
-		outlineVariant: '#e0e0e8',
+		onTertiaryContainer: colors.primary,
+		onSurface: colors.textPrimary,
+		onSurfaceVariant: colors.textSecondary,
+		onBackground: colors.textPrimary,
+		outline: colors.border,
+		outlineVariant: colors.borderLight,
 	},
 }
-

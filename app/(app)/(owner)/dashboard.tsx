@@ -11,53 +11,51 @@ import { Text } from 'react-native-paper'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuth, useBusiness, useBooking } from '../../../src/hooks'
+import { useAuth, useBusiness, useBooking, useThemeColors, useTranslation } from '../../../src/hooks'
 import { Card, LoadingScreen } from '../../../src/components/ui'
-import { colors, spacing, borderRadius } from '../../../src/constants/theme'
+import { spacing, borderRadius } from '../../../src/constants/theme'
 import { Booking, BookingStatus } from '../../../src/types'
-
-const STATUS_COLORS: Record<BookingStatus, string> = {
-	pending: colors.warning,
-	confirmed: colors.success,
-	completed: colors.info,
-	cancelled: colors.error,
-}
 
 interface QuickAction {
 	title: string
 	icon: keyof typeof Ionicons.glyphMap
 	route: string
-	color: string
 }
-
-const QUICK_ACTIONS: QuickAction[] = [
-	{
-		title: 'Services',
-		icon: 'cut-outline',
-		route: '/(app)/(owner)/services',
-		color: colors.accent,
-	},
-	{
-		title: 'Barbers',
-		icon: 'people-outline',
-		route: '/(app)/(owner)/barbers',
-		color: colors.secondary,
-	},
-	{
-		title: 'Settings',
-		icon: 'settings-outline',
-		route: '/(app)/(owner)/settings',
-		color: colors.info,
-	},
-]
 
 export default function DashboardScreen() {
 	const { user } = useAuth()
+	const { colors, isDarkMode } = useThemeColors()
+	const { t } = useTranslation()
+
+	const QUICK_ACTIONS: QuickAction[] = [
+		{
+			title: t('owner.services.title'),
+			icon: 'cut-outline',
+			route: '/(app)/(owner)/services',
+		},
+		{
+			title: t('owner.barbers.title'),
+			icon: 'people-outline',
+			route: '/(app)/(owner)/barbers',
+		},
+		{
+			title: t('owner.settings.title'),
+			icon: 'settings-outline',
+			route: '/(app)/(owner)/settings',
+		},
+	]
 	const { currentBusiness, loadOwnerBusiness, services, barbers, loadServices, loadBarbers } =
 		useBusiness()
 	const { bookings, isLoading, loadBusinessBookings, confirmBooking, completeBooking } = useBooking()
 
 	const [refreshing, setRefreshing] = useState(false)
+
+	const STATUS_COLORS: Record<BookingStatus, string> = {
+		pending: colors.warning,
+		confirmed: colors.success,
+		completed: colors.info,
+		cancelled: colors.error,
+	}
 
 	useEffect(() => {
 		if (user?.id) {
@@ -121,9 +119,9 @@ export default function DashboardScreen() {
 						<Ionicons
 							name="time-outline"
 							size={16}
-							color={colors.accent}
+							color={colors.textPrimary}
 						/>
-						<Text style={styles.timeText}>{formatTime(item.dateTime)}</Text>
+						<Text style={[styles.timeText, { color: colors.textPrimary }]}>{formatTime(item.dateTime)}</Text>
 					</View>
 					<View
 						style={[
@@ -132,27 +130,27 @@ export default function DashboardScreen() {
 						]}
 					>
 						<Text style={styles.statusText}>
-							{item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+							{t(`customer.myBookings.status.${item.status}`)}
 						</Text>
 					</View>
 				</View>
 
-				<View style={styles.bookingDetails}>
-					<Text style={styles.serviceName}>
+				<View style={[styles.bookingDetails, { borderTopColor: colors.border }]}>
+					<Text style={[styles.serviceName, { color: colors.textPrimary }]}>
 						{service?.name || 'Service'}
 					</Text>
-					<Text style={styles.barberName}>
-						with {barber?.name || 'Barber'}
+					<Text style={[styles.barberName, { color: colors.textSecondary }]}>
+						{t('customer.booking.barber')}: {barber?.name || 'Barber'}
 					</Text>
 				</View>
 
 				{item.status === 'pending' && (
 					<View style={styles.bookingActions}>
 						<Pressable
-							style={[styles.actionButton, styles.confirmButton]}
+							style={[styles.actionButton, { backgroundColor: colors.success }]}
 							onPress={() => handleConfirm(item.id)}
 						>
-							<Text style={styles.actionButtonText}>Confirm</Text>
+							<Text style={styles.actionButtonText}>{t('common.confirm')}</Text>
 						</Pressable>
 					</View>
 				)}
@@ -160,10 +158,10 @@ export default function DashboardScreen() {
 				{item.status === 'confirmed' && (
 					<View style={styles.bookingActions}>
 						<Pressable
-							style={[styles.actionButton, styles.completeButton]}
+							style={[styles.actionButton, { backgroundColor: colors.primary }]}
 							onPress={() => handleComplete(item.id)}
 						>
-							<Text style={styles.actionButtonText}>Mark Complete</Text>
+							<Text style={[styles.actionButtonText, { color: isDarkMode ? '#000000' : '#ffffff' }]}>{t('owner.dashboard.markComplete')}</Text>
 						</Pressable>
 					</View>
 				)}
@@ -172,27 +170,29 @@ export default function DashboardScreen() {
 	}
 
 	if (isLoading && !refreshing && !currentBusiness) {
-		return <LoadingScreen message="Loading dashboard..." />
+		return <LoadingScreen message={t('common.loading')} />
 	}
 
 	if (!currentBusiness) {
 		return (
-			<SafeAreaView style={styles.container} edges={['top']}>
+			<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
 				<View style={styles.setupContainer}>
-					<Ionicons
-						name="storefront-outline"
-						size={64}
-						color={colors.accent}
-					/>
-					<Text style={styles.setupTitle}>Set Up Your Business</Text>
-					<Text style={styles.setupSubtitle}>
-						Create your business profile to start accepting bookings
+					<View style={[styles.setupIconContainer, { backgroundColor: colors.surfaceVariant }]}>
+						<Ionicons
+							name="storefront-outline"
+							size={48}
+							color={colors.textPrimary}
+						/>
+					</View>
+					<Text style={[styles.setupTitle, { color: colors.textPrimary }]}>{t('owner.dashboard.setupBusiness')}</Text>
+					<Text style={[styles.setupSubtitle, { color: colors.textSecondary }]}>
+						{t('owner.dashboard.setupDescription')}
 					</Text>
 					<Pressable
-						style={styles.setupButton}
+						style={[styles.setupButton, { backgroundColor: colors.primary }]}
 						onPress={() => router.push('/(app)/(owner)/settings')}
 					>
-						<Text style={styles.setupButtonText}>Get Started</Text>
+						<Text style={[styles.setupButtonText, { color: isDarkMode ? '#000000' : '#ffffff' }]}>{t('owner.dashboard.getStarted')}</Text>
 					</Pressable>
 				</View>
 			</SafeAreaView>
@@ -200,13 +200,13 @@ export default function DashboardScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top']}>
-			<View style={styles.header}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+			<View style={[styles.header, { borderBottomColor: colors.border }]}>
 				<View>
-					<Text style={styles.greeting}>
-						Hello, {user?.name?.split(' ')[0]}!
+					<Text style={[styles.greeting, { color: colors.textSecondary }]}>
+						{t('owner.dashboard.welcome')}, {user?.name?.split(' ')[0]}!
 					</Text>
-					<Text style={styles.businessName}>{currentBusiness.name}</Text>
+					<Text style={[styles.businessName, { color: colors.textPrimary }]}>{currentBusiness.name}</Text>
 				</View>
 			</View>
 
@@ -218,49 +218,48 @@ export default function DashboardScreen() {
 					<RefreshControl
 						refreshing={refreshing}
 						onRefresh={onRefresh}
-						tintColor={colors.accent}
+						tintColor={colors.primary}
 					/>
 				}
 			>
 				{/* Stats Cards */}
 				<View style={styles.statsRow}>
-					<Card style={styles.statCard}>
-						<Text style={styles.statNumber}>{todayBookings.length}</Text>
-						<Text style={styles.statLabel}>Today's Bookings</Text>
-					</Card>
-					<Card style={styles.statCard}>
-						<Text style={styles.statNumber}>{pendingBookings.length}</Text>
-						<Text style={styles.statLabel}>Pending</Text>
-					</Card>
-					<Card style={styles.statCard}>
-						<Text style={styles.statNumber}>{services.length}</Text>
-						<Text style={styles.statLabel}>Services</Text>
-					</Card>
+					<View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+						<Text style={[styles.statNumber, { color: colors.textPrimary }]}>{todayBookings.length}</Text>
+						<Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('owner.dashboard.todayAppointments')}</Text>
+					</View>
+					<View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+						<Text style={[styles.statNumber, { color: colors.textPrimary }]}>{pendingBookings.length}</Text>
+						<Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('customer.myBookings.status.pending')}</Text>
+					</View>
+					<View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+						<Text style={[styles.statNumber, { color: colors.textPrimary }]}>{services.length}</Text>
+						<Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('owner.services.title')}</Text>
+					</View>
 				</View>
 
 				{/* Quick Actions */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Quick Actions</Text>
+					<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('owner.dashboard.quickActions')}</Text>
 					<View style={styles.actionsGrid}>
 						{QUICK_ACTIONS.map((action) => (
 							<Pressable
 								key={action.title}
-								style={styles.actionCard}
+								style={({ pressed }) => [
+									styles.actionCard,
+									{ backgroundColor: colors.surface, borderColor: colors.border },
+									pressed && styles.actionCardPressed,
+								]}
 								onPress={() => router.push(action.route as any)}
 							>
-								<View
-									style={[
-										styles.actionIcon,
-										{ backgroundColor: action.color },
-									]}
-								>
+								<View style={[styles.actionIcon, { backgroundColor: colors.surfaceVariant }]}>
 									<Ionicons
 										name={action.icon}
 										size={24}
 										color={colors.textPrimary}
 									/>
 								</View>
-								<Text style={styles.actionTitle}>{action.title}</Text>
+								<Text style={[styles.actionTitle, { color: colors.textPrimary }]}>{action.title}</Text>
 							</Pressable>
 						))}
 					</View>
@@ -268,15 +267,17 @@ export default function DashboardScreen() {
 
 				{/* Today's Schedule */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Today's Schedule</Text>
+					<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('owner.dashboard.todaySchedule')}</Text>
 					{todayBookings.length === 0 ? (
 						<Card style={styles.emptyCard}>
-							<Ionicons
-								name="calendar-outline"
-								size={40}
-								color={colors.textMuted}
-							/>
-							<Text style={styles.emptyText}>No bookings today</Text>
+							<View style={[styles.emptyIconContainer, { backgroundColor: colors.surfaceVariant }]}>
+								<Ionicons
+									name="calendar-outline"
+									size={32}
+									color={colors.textMuted}
+								/>
+							</View>
+							<Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('owner.dashboard.noAppointments')}</Text>
 						</Card>
 					) : (
 						todayBookings.map((booking) => (
@@ -294,24 +295,22 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		paddingHorizontal: spacing.xl,
 		paddingTop: spacing.md,
 		paddingBottom: spacing.lg,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	greeting: {
-		fontSize: 16,
-		color: colors.textSecondary,
+		fontSize: 15,
+		fontWeight: '500',
 	},
 	businessName: {
 		fontSize: 24,
-		fontWeight: 'bold',
-		color: colors.textPrimary,
+		fontWeight: '700',
 		marginTop: spacing.xs,
+		letterSpacing: -0.5,
 	},
 	scrollView: {
 		flex: 1,
@@ -329,17 +328,20 @@ const styles = StyleSheet.create({
 		flex: 1,
 		alignItems: 'center',
 		padding: spacing.md,
+		borderRadius: borderRadius.xl,
+		borderWidth: 1,
 	},
 	statNumber: {
 		fontSize: 28,
-		fontWeight: 'bold',
-		color: colors.accent,
+		fontWeight: '700',
 	},
 	statLabel: {
 		fontSize: 11,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 		textAlign: 'center',
+		fontWeight: '500',
+		textTransform: 'uppercase',
+		letterSpacing: 0.3,
 	},
 	section: {
 		marginBottom: spacing.xl,
@@ -347,7 +349,6 @@ const styles = StyleSheet.create({
 	sectionTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		marginBottom: spacing.md,
 	},
 	actionsGrid: {
@@ -358,10 +359,12 @@ const styles = StyleSheet.create({
 		flex: 1,
 		alignItems: 'center',
 		padding: spacing.md,
-		backgroundColor: colors.card,
-		borderRadius: borderRadius.lg,
+		borderRadius: borderRadius.xl,
 		borderWidth: 1,
-		borderColor: colors.border,
+	},
+	actionCardPressed: {
+		opacity: 0.7,
+		transform: [{ scale: 0.98 }],
 	},
 	actionIcon: {
 		width: 48,
@@ -372,9 +375,8 @@ const styles = StyleSheet.create({
 		marginBottom: spacing.sm,
 	},
 	actionTitle: {
-		fontSize: 12,
-		fontWeight: '500',
-		color: colors.textPrimary,
+		fontSize: 13,
+		fontWeight: '600',
 	},
 	bookingCard: {
 		marginBottom: spacing.sm,
@@ -393,7 +395,6 @@ const styles = StyleSheet.create({
 	timeText: {
 		fontSize: 16,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	statusBadge: {
 		paddingHorizontal: spacing.sm,
@@ -403,21 +404,20 @@ const styles = StyleSheet.create({
 	statusText: {
 		fontSize: 11,
 		fontWeight: '600',
-		color: colors.textPrimary,
+		color: '#ffffff',
+		textTransform: 'uppercase',
+		letterSpacing: 0.3,
 	},
 	bookingDetails: {
 		borderTopWidth: 1,
-		borderTopColor: colors.border,
 		paddingTop: spacing.sm,
 	},
 	serviceName: {
 		fontSize: 16,
 		fontWeight: '500',
-		color: colors.textPrimary,
 	},
 	barberName: {
-		fontSize: 13,
-		color: colors.textSecondary,
+		fontSize: 14,
 		marginTop: spacing.xs,
 	},
 	bookingActions: {
@@ -428,28 +428,29 @@ const styles = StyleSheet.create({
 	actionButton: {
 		flex: 1,
 		paddingVertical: spacing.sm,
-		borderRadius: borderRadius.md,
+		borderRadius: borderRadius.lg,
 		alignItems: 'center',
-	},
-	confirmButton: {
-		backgroundColor: colors.success,
-	},
-	completeButton: {
-		backgroundColor: colors.info,
 	},
 	actionButtonText: {
 		fontSize: 14,
 		fontWeight: '600',
-		color: colors.textPrimary,
+		color: '#ffffff',
 	},
 	emptyCard: {
 		alignItems: 'center',
 		padding: spacing.xl,
 	},
+	emptyIconContainer: {
+		width: 64,
+		height: 64,
+		borderRadius: 32,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginBottom: spacing.sm,
+	},
 	emptyText: {
 		fontSize: 14,
-		color: colors.textMuted,
-		marginTop: spacing.sm,
+		fontWeight: '500',
 	},
 	setupContainer: {
 		flex: 1,
@@ -457,29 +458,33 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		padding: spacing.xl,
 	},
+	setupIconContainer: {
+		width: 96,
+		height: 96,
+		borderRadius: 48,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginBottom: spacing.lg,
+	},
 	setupTitle: {
 		fontSize: 24,
-		fontWeight: 'bold',
-		color: colors.textPrimary,
-		marginTop: spacing.lg,
+		fontWeight: '700',
+		marginTop: spacing.sm,
 	},
 	setupSubtitle: {
-		fontSize: 14,
-		color: colors.textSecondary,
+		fontSize: 15,
 		marginTop: spacing.sm,
 		textAlign: 'center',
+		lineHeight: 22,
 	},
 	setupButton: {
 		marginTop: spacing.xl,
 		paddingHorizontal: spacing.xl,
 		paddingVertical: spacing.md,
-		backgroundColor: colors.accent,
 		borderRadius: borderRadius.lg,
 	},
 	setupButtonText: {
 		fontSize: 16,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 })
-

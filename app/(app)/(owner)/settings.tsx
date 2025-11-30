@@ -13,9 +13,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useAuth, useBusiness } from '../../../src/hooks'
+import { useAuth, useBusiness, useThemeColors } from '../../../src/hooks'
 import { Card, Button, Input, LoadingScreen } from '../../../src/components/ui'
-import { colors, spacing, borderRadius } from '../../../src/constants/theme'
+import { spacing, borderRadius } from '../../../src/constants/theme'
 import { updateUserRole } from '../../../src/services/auth-service'
 
 const businessSchema = z.object({
@@ -39,6 +39,7 @@ const DAYS = [
 
 export default function SettingsScreen() {
 	const { user } = useAuth()
+	const { colors, isDarkMode } = useThemeColors()
 	const {
 		currentBusiness,
 		isLoading,
@@ -110,12 +111,12 @@ export default function SettingsScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top']}>
-			<View style={styles.header}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+			<View style={[styles.header, { borderBottomColor: colors.border }]}>
 				<Pressable onPress={() => router.back()} style={styles.backButton}>
 					<Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
 				</Pressable>
-				<Text style={styles.headerTitle}>Business Settings</Text>
+				<Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Business Settings</Text>
 				<View style={styles.backButton} />
 			</View>
 
@@ -126,8 +127,8 @@ export default function SettingsScreen() {
 			>
 				{/* Business Info */}
 				<Card style={styles.card}>
-					<Text style={styles.sectionTitle}>Business Information</Text>
-					<Text style={styles.sectionSubtitle}>
+					<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Business Information</Text>
+					<Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
 						{currentBusiness
 							? 'Update your business details'
 							: 'Set up your business to start accepting bookings'}
@@ -206,18 +207,18 @@ export default function SettingsScreen() {
 					<>
 						{/* Subscription Status */}
 						<Card style={styles.card}>
-							<Text style={styles.sectionTitle}>Subscription</Text>
+							<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Subscription</Text>
 							<View style={styles.subscriptionStatus}>
-								<View style={styles.subscriptionBadge}>
-									<Text style={styles.subscriptionText}>
+								<View style={[styles.subscriptionBadge, { backgroundColor: colors.primary }]}>
+									<Text style={[styles.subscriptionText, { color: isDarkMode ? '#000000' : '#ffffff' }]}>
 										{currentBusiness.subscriptionStatus === 'trial'
 											? 'Free Trial'
 											: currentBusiness.subscriptionStatus.charAt(0).toUpperCase() +
-											  currentBusiness.subscriptionStatus.slice(1)}
+											currentBusiness.subscriptionStatus.slice(1)}
 									</Text>
 								</View>
 								{currentBusiness.subscriptionStatus === 'trial' && (
-									<Text style={styles.trialText}>
+									<Text style={[styles.trialText, { color: colors.textSecondary }]}>
 										Upgrade to unlock all features
 									</Text>
 								)}
@@ -238,25 +239,25 @@ export default function SettingsScreen() {
 
 						{/* Working Hours */}
 						<Card style={styles.card}>
-							<Text style={styles.sectionTitle}>Working Hours</Text>
-							<Text style={styles.sectionSubtitle}>
+							<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Working Hours</Text>
+							<Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
 								Set when your barbershop is open
 							</Text>
 
 							{DAYS.map((day) => {
 								const hours = currentBusiness.workingHours[day]
 								return (
-									<View key={day} style={styles.dayRow}>
+									<View key={day} style={[styles.dayRow, { borderBottomColor: colors.border }]}>
 										<View style={styles.dayInfo}>
-											<Text style={styles.dayName}>
+											<Text style={[styles.dayName, { color: colors.textPrimary }]}>
 												{day.charAt(0).toUpperCase() + day.slice(1)}
 											</Text>
 											{hours.isOpen ? (
-												<Text style={styles.dayHours}>
+												<Text style={[styles.dayHours, { color: colors.textSecondary }]}>
 													{hours.start} - {hours.end}
 												</Text>
 											) : (
-												<Text style={styles.closedText}>Closed</Text>
+												<Text style={[styles.closedText, { color: colors.textMuted }]}>Closed</Text>
 											)}
 										</View>
 										<Switch
@@ -268,7 +269,7 @@ export default function SettingsScreen() {
 													'Working hours editing will be available soon!'
 												)
 											}}
-											color={colors.accent}
+											color={colors.primary}
 										/>
 									</View>
 								)
@@ -284,7 +285,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		flexDirection: 'row',
@@ -293,7 +293,6 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.md,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	backButton: {
 		width: 40,
@@ -304,7 +303,6 @@ const styles = StyleSheet.create({
 	headerTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	scrollView: {
 		flex: 1,
@@ -319,12 +317,10 @@ const styles = StyleSheet.create({
 	sectionTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		marginBottom: spacing.xs,
 	},
 	sectionSubtitle: {
 		fontSize: 14,
-		color: colors.textSecondary,
 		marginBottom: spacing.lg,
 	},
 	form: {
@@ -342,17 +338,16 @@ const styles = StyleSheet.create({
 	subscriptionBadge: {
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.sm,
-		backgroundColor: colors.accent,
 		borderRadius: borderRadius.full,
 	},
 	subscriptionText: {
-		fontSize: 14,
+		fontSize: 13,
 		fontWeight: '600',
-		color: colors.textPrimary,
+		textTransform: 'uppercase',
+		letterSpacing: 0.3,
 	},
 	trialText: {
 		fontSize: 13,
-		color: colors.textSecondary,
 	},
 	upgradeButton: {
 		marginTop: spacing.sm,
@@ -363,7 +358,6 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		paddingVertical: spacing.md,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	dayInfo: {
 		flex: 1,
@@ -371,17 +365,13 @@ const styles = StyleSheet.create({
 	dayName: {
 		fontSize: 16,
 		fontWeight: '500',
-		color: colors.textPrimary,
 	},
 	dayHours: {
 		fontSize: 14,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 	},
 	closedText: {
 		fontSize: 14,
-		color: colors.textMuted,
 		marginTop: spacing.xs,
 	},
 })
-

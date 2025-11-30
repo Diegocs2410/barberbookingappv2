@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks'
 import {
 	signUp as signUpAction,
 	signIn as signInAction,
+	signInWithGoogle as signInWithGoogleAction,
 	signOut as signOutAction,
 	fetchCurrentUser,
 	updateRole as updateRoleAction,
@@ -81,6 +82,13 @@ export function useAuth() {
 		[dispatch]
 	)
 
+	const signInWithGoogle = useCallback(
+		async (idToken: string) => {
+			return dispatch(signInWithGoogleAction({ idToken })).unwrap()
+		},
+		[dispatch]
+	)
+
 	const signOut = useCallback(async () => {
 		return dispatch(signOutAction()).unwrap()
 	}, [dispatch])
@@ -116,6 +124,7 @@ export function useAuth() {
 		error,
 		signUp,
 		signIn,
+		signInWithGoogle,
 		signOut,
 		updateRole,
 		updateProfile,

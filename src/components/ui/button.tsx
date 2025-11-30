@@ -1,7 +1,8 @@
 import React from 'react'
 import { StyleSheet, ViewStyle } from 'react-native'
 import { Button as PaperButton } from 'react-native-paper'
-import { colors, borderRadius } from '../../constants/theme'
+import { useThemeColors } from '../../hooks'
+import { borderRadius } from '../../constants/theme'
 
 interface ButtonProps {
 	children: React.ReactNode
@@ -14,6 +15,10 @@ interface ButtonProps {
 	fullWidth?: boolean
 }
 
+/**
+ * Componente de botón reutilizable
+ * Sigue el diseño monocromático de la app con soporte para temas
+ */
 export function Button({
 	children,
 	onPress,
@@ -24,6 +29,32 @@ export function Button({
 	style,
 	fullWidth = true,
 }: ButtonProps) {
+	const { colors, isDarkMode } = useThemeColors()
+
+	const dynamicStyles = {
+		contained: {
+			backgroundColor: colors.primary,
+		},
+		outlined: {
+			borderColor: colors.primary,
+		},
+		disabled: {
+			backgroundColor: colors.border,
+		},
+		label: {
+			color: isDarkMode ? '#000000' : '#ffffff',
+		},
+		outlinedLabel: {
+			color: colors.primary,
+		},
+		textLabel: {
+			color: colors.primary,
+		},
+		disabledLabel: {
+			color: colors.textMuted,
+		},
+	}
+
 	return (
 		<PaperButton
 			mode={mode}
@@ -34,13 +65,17 @@ export function Button({
 			style={[
 				styles.button,
 				fullWidth && styles.fullWidth,
-				mode === 'contained' && styles.contained,
-				mode === 'outlined' && styles.outlined,
+				mode === 'contained' && dynamicStyles.contained,
+				mode === 'outlined' && dynamicStyles.outlined,
+				disabled && dynamicStyles.disabled,
 				style,
 			]}
 			labelStyle={[
 				styles.label,
-				mode === 'outlined' && styles.outlinedLabel,
+				mode === 'contained' && dynamicStyles.label,
+				mode === 'outlined' && dynamicStyles.outlinedLabel,
+				mode === 'text' && dynamicStyles.textLabel,
+				disabled && dynamicStyles.disabledLabel,
 			]}
 			contentStyle={styles.content}
 		>
@@ -56,23 +91,12 @@ const styles = StyleSheet.create({
 	fullWidth: {
 		width: '100%',
 	},
-	contained: {
-		backgroundColor: colors.accent,
-	},
-	outlined: {
-		borderColor: colors.accent,
-		borderWidth: 2,
-	},
 	label: {
 		fontSize: 16,
 		fontWeight: '600',
-		color: colors.textPrimary,
-	},
-	outlinedLabel: {
-		color: colors.accent,
+		letterSpacing: 0.3,
 	},
 	content: {
 		paddingVertical: 8,
 	},
 })
-

@@ -3,20 +3,14 @@ import { View, StyleSheet, FlatList, RefreshControl, Alert, Pressable } from 're
 import { Text, SegmentedButtons } from 'react-native-paper'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuth, useBooking, useBusiness } from '../../src/hooks'
+import { useAuth, useBooking, useBusiness, useThemeColors } from '../../src/hooks'
 import { Card, LoadingScreen } from '../../src/components/ui'
-import { colors, spacing, borderRadius } from '../../src/constants/theme'
+import { spacing, borderRadius } from '../../src/constants/theme'
 import { Booking, BookingStatus } from '../../src/types'
-
-const STATUS_COLORS: Record<BookingStatus, string> = {
-	pending: colors.warning,
-	confirmed: colors.success,
-	completed: colors.info,
-	cancelled: colors.error,
-}
 
 export default function MyBookingsScreen() {
 	const { user } = useAuth()
+	const { colors, isDarkMode } = useThemeColors()
 	const {
 		upcomingBookings,
 		pastBookings,
@@ -28,6 +22,13 @@ export default function MyBookingsScreen() {
 
 	const [refreshing, setRefreshing] = useState(false)
 	const [tab, setTab] = useState('upcoming')
+
+	const STATUS_COLORS: Record<BookingStatus, string> = {
+		pending: colors.warning,
+		confirmed: colors.success,
+		completed: colors.info,
+		cancelled: colors.error,
+	}
 
 	useEffect(() => {
 		if (user?.id) {
@@ -95,10 +96,10 @@ export default function MyBookingsScreen() {
 						<Ionicons
 							name="calendar-outline"
 							size={16}
-							color={colors.accent}
+							color={colors.textPrimary}
 						/>
-						<Text style={styles.dateText}>{date}</Text>
-						<Text style={styles.timeText}>{time}</Text>
+						<Text style={[styles.dateText, { color: colors.textPrimary }]}>{date}</Text>
+						<Text style={[styles.timeText, { color: colors.textSecondary }]}>{time}</Text>
 					</View>
 					<View
 						style={[
@@ -112,8 +113,8 @@ export default function MyBookingsScreen() {
 					</View>
 				</View>
 
-				<View style={styles.bookingDetails}>
-					<Text style={styles.businessName}>
+				<View style={[styles.bookingDetails, { borderTopColor: colors.border }]}>
+					<Text style={[styles.businessName, { color: colors.textPrimary }]}>
 						{business?.name || 'Loading...'}
 					</Text>
 					<View style={styles.detailRow}>
@@ -122,14 +123,17 @@ export default function MyBookingsScreen() {
 							size={14}
 							color={colors.textSecondary}
 						/>
-						<Text style={styles.detailText}>{item.duration} min</Text>
+						<Text style={[styles.detailText, { color: colors.textSecondary }]}>{item.duration} min</Text>
 					</View>
 				</View>
 
 				{canCancel && (
-					<View style={styles.bookingActions}>
-						<Pressable onPress={() => handleCancelBooking(item.id)}>
-							<Text style={styles.cancelButton}>
+					<View style={[styles.bookingActions, { borderTopColor: colors.border }]}>
+						<Pressable
+							onPress={() => handleCancelBooking(item.id)}
+							style={styles.cancelButtonContainer}
+						>
+							<Text style={[styles.cancelButton, { color: colors.error }]}>
 								Cancel Booking
 							</Text>
 						</Pressable>
@@ -146,9 +150,9 @@ export default function MyBookingsScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top']}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
 			<View style={styles.header}>
-				<Text style={styles.title}>My Bookings</Text>
+				<Text style={[styles.title, { color: colors.textPrimary }]}>My Bookings</Text>
 			</View>
 
 			<View style={styles.tabsContainer}>
@@ -159,7 +163,14 @@ export default function MyBookingsScreen() {
 						{ value: 'upcoming', label: 'Upcoming' },
 						{ value: 'past', label: 'Past' },
 					]}
-					style={styles.tabs}
+					style={[styles.tabs, { backgroundColor: colors.surface }]}
+					theme={{
+						colors: {
+							secondaryContainer: colors.primary,
+							onSecondaryContainer: isDarkMode ? '#000000' : '#ffffff',
+							outline: colors.border,
+						},
+					}}
 				/>
 			</View>
 
@@ -173,20 +184,22 @@ export default function MyBookingsScreen() {
 					<RefreshControl
 						refreshing={refreshing}
 						onRefresh={onRefresh}
-						tintColor={colors.accent}
+						tintColor={colors.primary}
 					/>
 				}
 				ListEmptyComponent={
 					<View style={styles.emptyContainer}>
-						<Ionicons
-							name={tab === 'upcoming' ? 'calendar-outline' : 'time-outline'}
-							size={64}
-							color={colors.textMuted}
-						/>
-						<Text style={styles.emptyTitle}>
+						<View style={[styles.emptyIconContainer, { backgroundColor: colors.surfaceVariant }]}>
+							<Ionicons
+								name={tab === 'upcoming' ? 'calendar-outline' : 'time-outline'}
+								size={40}
+								color={colors.textMuted}
+							/>
+						</View>
+						<Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
 							No {tab} bookings
 						</Text>
-						<Text style={styles.emptySubtitle}>
+						<Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
 							{tab === 'upcoming'
 								? 'Book an appointment to get started'
 								: 'Your past bookings will appear here'}
@@ -201,7 +214,6 @@ export default function MyBookingsScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		paddingHorizontal: spacing.xl,
@@ -210,16 +222,14 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 32,
-		fontWeight: 'bold',
-		color: colors.textPrimary,
+		fontWeight: '700',
+		letterSpacing: -0.5,
 	},
 	tabsContainer: {
 		paddingHorizontal: spacing.xl,
 		paddingVertical: spacing.md,
 	},
-	tabs: {
-		backgroundColor: colors.surface,
-	},
+	tabs: {},
 	listContent: {
 		paddingHorizontal: spacing.xl,
 		paddingBottom: spacing.xxl,
@@ -241,11 +251,10 @@ const styles = StyleSheet.create({
 	dateText: {
 		fontSize: 14,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	timeText: {
 		fontSize: 14,
-		color: colors.textSecondary,
+		fontWeight: '500',
 	},
 	statusBadge: {
 		paddingHorizontal: spacing.sm,
@@ -253,19 +262,19 @@ const styles = StyleSheet.create({
 		borderRadius: borderRadius.sm,
 	},
 	statusText: {
-		fontSize: 12,
+		fontSize: 11,
 		fontWeight: '600',
-		color: colors.textPrimary,
+		color: '#ffffff',
+		textTransform: 'uppercase',
+		letterSpacing: 0.3,
 	},
 	bookingDetails: {
 		borderTopWidth: 1,
-		borderTopColor: colors.border,
 		paddingTop: spacing.md,
 	},
 	businessName: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		marginBottom: spacing.sm,
 	},
 	detailRow: {
@@ -275,19 +284,20 @@ const styles = StyleSheet.create({
 	},
 	detailText: {
 		fontSize: 13,
-		color: colors.textSecondary,
+		fontWeight: '500',
 	},
 	bookingActions: {
 		borderTopWidth: 1,
-		borderTopColor: colors.border,
 		marginTop: spacing.md,
 		paddingTop: spacing.md,
+	},
+	cancelButtonContainer: {
+		alignItems: 'center',
+		paddingVertical: spacing.sm,
 	},
 	cancelButton: {
 		fontSize: 14,
 		fontWeight: '600',
-		color: colors.error,
-		textAlign: 'center',
 	},
 	emptyContainer: {
 		flex: 1,
@@ -295,17 +305,22 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		paddingTop: spacing.xxl * 2,
 	},
+	emptyIconContainer: {
+		width: 80,
+		height: 80,
+		borderRadius: 40,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginBottom: spacing.md,
+	},
 	emptyTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
-		marginTop: spacing.md,
+		marginTop: spacing.sm,
 	},
 	emptySubtitle: {
 		fontSize: 14,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 		textAlign: 'center',
 	},
 })
-

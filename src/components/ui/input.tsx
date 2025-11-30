@@ -1,7 +1,8 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { TextInput, HelperText } from 'react-native-paper'
-import { colors, borderRadius } from '../../constants/theme'
+import { useThemeColors } from '../../hooks'
+import { borderRadius } from '../../constants/theme'
 
 interface InputProps {
 	label: string
@@ -21,6 +22,10 @@ interface InputProps {
 	right?: React.ReactNode
 }
 
+/**
+ * Componente de input reutilizable
+ * Diseño limpio con estilo monocromático y soporte para temas
+ */
 export function Input({
 	label,
 	value = '',
@@ -38,6 +43,8 @@ export function Input({
 	left,
 	right,
 }: InputProps) {
+	const { colors } = useThemeColors()
+
 	return (
 		<View style={styles.container}>
 			<TextInput
@@ -55,9 +62,9 @@ export function Input({
 				numberOfLines={numberOfLines}
 				error={!!error}
 				mode="outlined"
-				style={styles.input}
+				style={[styles.input, { backgroundColor: colors.surface }]}
 				outlineStyle={styles.outline}
-				activeOutlineColor={colors.accent}
+				activeOutlineColor={colors.primary}
 				outlineColor={colors.border}
 				textColor={colors.textPrimary}
 				placeholderTextColor={colors.textMuted}
@@ -66,11 +73,12 @@ export function Input({
 				theme={{
 					colors: {
 						onSurfaceVariant: colors.textSecondary,
+						surfaceVariant: colors.surfaceVariant,
 					},
 				}}
 			/>
 			{error && (
-				<HelperText type="error" visible style={styles.error}>
+				<HelperText type="error" visible style={[styles.error, { color: colors.error }]}>
 					{error}
 				</HelperText>
 			)}
@@ -82,14 +90,12 @@ const styles = StyleSheet.create({
 	container: {
 		marginBottom: 8,
 	},
-	input: {
-		backgroundColor: colors.surface,
-	},
+	input: {},
 	outline: {
-		borderRadius: borderRadius.md,
+		borderRadius: borderRadius.lg,
+		borderWidth: 1.5,
 	},
 	error: {
-		color: colors.error,
+		fontSize: 12,
 	},
 })
-

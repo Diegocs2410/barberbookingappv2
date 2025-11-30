@@ -1,27 +1,39 @@
 import React from 'react'
+import { useColorScheme } from 'react-native'
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { colors } from '../../src/constants/theme'
-import { useAuth } from '../../src/hooks'
+import { useAuth, useTranslation } from '../../src/hooks'
 
 export default function AppLayout() {
 	const { user } = useAuth()
+	const { t } = useTranslation()
+	const colorScheme = useColorScheme()
+	const isDarkMode = colorScheme === 'dark'
 	const isOwner = user?.role === 'owner' || user?.role === 'barber'
+
+	// Dynamic colors based on theme
+	const tabBarColors = {
+		background: isDarkMode ? '#0a0a0a' : colors.surface,
+		border: isDarkMode ? '#222222' : colors.border,
+		active: isDarkMode ? '#ffffff' : colors.primary,
+		inactive: isDarkMode ? '#666666' : colors.textMuted,
+	}
 
 	return (
 		<Tabs
 			screenOptions={{
 				headerShown: false,
 				tabBarStyle: {
-					backgroundColor: colors.surface,
-					borderTopColor: colors.border,
+					backgroundColor: tabBarColors.background,
+					borderTopColor: tabBarColors.border,
 					borderTopWidth: 1,
 					height: 85,
 					paddingBottom: 25,
 					paddingTop: 10,
 				},
-				tabBarActiveTintColor: colors.accent,
-				tabBarInactiveTintColor: colors.textMuted,
+				tabBarActiveTintColor: tabBarColors.active,
+				tabBarInactiveTintColor: tabBarColors.inactive,
 				tabBarLabelStyle: {
 					fontSize: 12,
 					fontWeight: '500',
@@ -32,7 +44,7 @@ export default function AppLayout() {
 			<Tabs.Screen
 				name="(customer)"
 				options={{
-					title: 'Discover',
+					title: t('tabs.discover'),
 					href: isOwner ? null : undefined,
 					tabBarIcon: ({ color, size }) => (
 						<Ionicons name="search-outline" size={size} color={color} />
@@ -42,19 +54,19 @@ export default function AppLayout() {
 			<Tabs.Screen
 				name="my-bookings"
 				options={{
-					title: 'Bookings',
+					title: t('tabs.bookings'),
 					href: isOwner ? null : undefined,
 					tabBarIcon: ({ color, size }) => (
 						<Ionicons name="calendar-outline" size={size} color={color} />
 					),
 				}}
 			/>
-			
+
 			{/* Owner screens */}
 			<Tabs.Screen
 				name="(owner)"
 				options={{
-					title: 'Dashboard',
+					title: t('tabs.dashboard'),
 					href: !isOwner ? null : undefined,
 					tabBarIcon: ({ color, size }) => (
 						<Ionicons name="grid-outline" size={size} color={color} />
@@ -66,7 +78,7 @@ export default function AppLayout() {
 			<Tabs.Screen
 				name="profile"
 				options={{
-					title: 'Profile',
+					title: t('tabs.profile'),
 					tabBarIcon: ({ color, size }) => (
 						<Ionicons name="person-outline" size={size} color={color} />
 					),
@@ -75,4 +87,3 @@ export default function AppLayout() {
 		</Tabs>
 	)
 }
-

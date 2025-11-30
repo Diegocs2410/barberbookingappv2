@@ -16,9 +16,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useAuth, useBusiness } from '../../../src/hooks'
+import { useAuth, useBusiness, useThemeColors } from '../../../src/hooks'
 import { Card, Button, Input, Avatar, LoadingScreen } from '../../../src/components/ui'
-import { colors, spacing, borderRadius } from '../../../src/constants/theme'
+import { spacing, borderRadius } from '../../../src/constants/theme'
 import { Barber } from '../../../src/types'
 
 const barberSchema = z.object({
@@ -30,6 +30,7 @@ type BarberFormData = z.infer<typeof barberSchema>
 
 export default function BarbersScreen() {
 	const { user } = useAuth()
+	const { colors } = useThemeColors()
 	const {
 		currentBusiness,
 		barbers,
@@ -143,9 +144,9 @@ export default function BarbersScreen() {
 			<View style={styles.barberContent}>
 				<Avatar source={item.photoUrl} name={item.name} size="medium" />
 				<View style={styles.barberInfo}>
-					<Text style={styles.barberName}>{item.name}</Text>
+					<Text style={[styles.barberName, { color: colors.textPrimary }]}>{item.name}</Text>
 					{item.specialties.length > 0 && (
-						<Text style={styles.barberSpecialties}>
+						<Text style={[styles.barberSpecialties, { color: colors.textSecondary }]}>
 							{item.specialties.join(' • ')}
 						</Text>
 					)}
@@ -155,7 +156,7 @@ export default function BarbersScreen() {
 						style={styles.iconButton}
 						onPress={() => openEditModal(item)}
 					>
-						<Ionicons name="pencil" size={18} color={colors.accent} />
+						<Ionicons name="pencil" size={18} color={colors.textPrimary} />
 					</Pressable>
 					<Pressable
 						style={styles.iconButton}
@@ -173,14 +174,14 @@ export default function BarbersScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top']}>
-			<View style={styles.header}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+			<View style={[styles.header, { borderBottomColor: colors.border }]}>
 				<Pressable onPress={() => router.back()} style={styles.backButton}>
 					<Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
 				</Pressable>
-				<Text style={styles.headerTitle}>Barbers</Text>
+				<Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Barbers</Text>
 				<Pressable onPress={openAddModal} style={styles.addButton}>
-					<Ionicons name="add" size={24} color={colors.accent} />
+					<Ionicons name="add" size={24} color={colors.textPrimary} />
 				</Pressable>
 			</View>
 
@@ -192,13 +193,15 @@ export default function BarbersScreen() {
 				showsVerticalScrollIndicator={false}
 				ListEmptyComponent={
 					<View style={styles.emptyContainer}>
-						<Ionicons
-							name="people-outline"
-							size={64}
-							color={colors.textMuted}
-						/>
-						<Text style={styles.emptyTitle}>No barbers yet</Text>
-						<Text style={styles.emptySubtitle}>
+						<View style={[styles.emptyIconContainer, { backgroundColor: colors.surfaceVariant }]}>
+							<Ionicons
+								name="people-outline"
+								size={40}
+								color={colors.textMuted}
+							/>
+						</View>
+						<Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No barbers yet</Text>
+						<Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
 							Add barbers to your team to start accepting bookings
 						</Text>
 						<Button onPress={openAddModal} style={styles.emptyButton}>
@@ -217,14 +220,14 @@ export default function BarbersScreen() {
 			>
 				<KeyboardAvoidingView
 					behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-					style={styles.modalContainer}
+					style={[styles.modalContainer, { backgroundColor: colors.background }]}
 				>
 					<SafeAreaView style={styles.modalContent}>
-						<View style={styles.modalHeader}>
+						<View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
 							<Pressable onPress={() => setModalVisible(false)}>
-								<Text style={styles.cancelText}>Cancel</Text>
+								<Text style={[styles.cancelText, { color: colors.textPrimary }]}>Cancel</Text>
 							</Pressable>
-							<Text style={styles.modalTitle}>
+							<Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
 								{editingBarber ? 'Edit Barber' : 'Add Barber'}
 							</Text>
 							<View style={{ width: 50 }} />
@@ -258,7 +261,7 @@ export default function BarbersScreen() {
 								)}
 							/>
 
-							<Text style={styles.hint}>
+							<Text style={[styles.hint, { color: colors.textMuted }]}>
 								Separate specialties with commas
 							</Text>
 
@@ -280,7 +283,6 @@ export default function BarbersScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		flexDirection: 'row',
@@ -289,7 +291,6 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.md,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	backButton: {
 		width: 40,
@@ -300,7 +301,6 @@ const styles = StyleSheet.create({
 	headerTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	addButton: {
 		width: 40,
@@ -326,11 +326,9 @@ const styles = StyleSheet.create({
 	barberName: {
 		fontSize: 16,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	barberSpecialties: {
 		fontSize: 13,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 	},
 	barberActions: {
@@ -346,15 +344,21 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		paddingTop: spacing.xxl * 2,
 	},
+	emptyIconContainer: {
+		width: 80,
+		height: 80,
+		borderRadius: 40,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginBottom: spacing.md,
+	},
 	emptyTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
-		marginTop: spacing.md,
+		marginTop: spacing.sm,
 	},
 	emptySubtitle: {
 		fontSize: 14,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 		textAlign: 'center',
 		paddingHorizontal: spacing.xl,
@@ -364,7 +368,6 @@ const styles = StyleSheet.create({
 	},
 	modalContainer: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	modalContent: {
 		flex: 1,
@@ -376,28 +379,25 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.md,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	cancelText: {
 		fontSize: 16,
-		color: colors.accent,
+		fontWeight: '500',
 	},
 	modalTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	form: {
 		padding: spacing.xl,
 	},
 	hint: {
 		fontSize: 12,
-		color: colors.textMuted,
 		marginTop: -spacing.sm,
 		marginBottom: spacing.md,
+		fontWeight: '500',
 	},
 	submitButton: {
 		marginTop: spacing.lg,
 	},
 })
-

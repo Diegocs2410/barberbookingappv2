@@ -10,14 +10,15 @@ import { Text, Searchbar } from 'react-native-paper'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useBusiness, useTranslation } from '../../../src/hooks'
+import { useBusiness, useTranslation, useThemeColors } from '../../../src/hooks'
 import { Card, Avatar, LoadingScreen } from '../../../src/components/ui'
-import { colors, spacing, borderRadius } from '../../../src/constants/theme'
+import { spacing, borderRadius } from '../../../src/constants/theme'
 import { Business } from '../../../src/types'
 
 export default function DiscoverScreen() {
 	const { businesses, isLoading, error, loadAllBusinesses } = useBusiness()
 	const { t } = useTranslation()
+	const { colors } = useThemeColors()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [refreshing, setRefreshing] = useState(false)
 
@@ -53,28 +54,30 @@ export default function DiscoverScreen() {
 			<View style={styles.businessContent}>
 				<Avatar source={item.logoUrl} name={item.name} size="medium" />
 				<View style={styles.businessInfo}>
-					<Text style={styles.businessName}>{item.name}</Text>
+					<Text style={[styles.businessName, { color: colors.textPrimary }]}>{item.name}</Text>
 					<View style={styles.locationRow}>
 						<Ionicons
 							name="location-outline"
 							size={14}
 							color={colors.textSecondary}
 						/>
-						<Text style={styles.businessAddress} numberOfLines={1}>
+						<Text style={[styles.businessAddress, { color: colors.textSecondary }]} numberOfLines={1}>
 							{item.address}
 						</Text>
 					</View>
 					{item.description && (
-						<Text style={styles.businessDescription} numberOfLines={2}>
+						<Text style={[styles.businessDescription, { color: colors.textMuted }]} numberOfLines={2}>
 							{item.description}
 						</Text>
 					)}
 				</View>
-				<Ionicons
-					name="chevron-forward"
-					size={20}
-					color={colors.textMuted}
-				/>
+				<View style={[styles.chevronContainer, { backgroundColor: colors.surfaceVariant }]}>
+					<Ionicons
+						name="chevron-forward"
+						size={20}
+						color={colors.textMuted}
+					/>
+				</View>
 			</View>
 		</Card>
 	)
@@ -85,10 +88,10 @@ export default function DiscoverScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top']}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
 			<View style={styles.header}>
-				<Text style={styles.title}>{t('customer.home.title')}</Text>
-				<Text style={styles.subtitle}>{t('customer.home.subtitle')}</Text>
+				<Text style={[styles.title, { color: colors.textPrimary }]}>{t('customer.home.title')}</Text>
+				<Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('customer.home.subtitle')}</Text>
 			</View>
 
 			<View style={styles.searchContainer}>
@@ -96,8 +99,8 @@ export default function DiscoverScreen() {
 					placeholder={t('customer.home.searchPlaceholder')}
 					onChangeText={setSearchQuery}
 					value={searchQuery}
-					style={styles.searchbar}
-					inputStyle={styles.searchInput}
+					style={[styles.searchbar, { backgroundColor: colors.surface, borderColor: colors.border }]}
+					inputStyle={[styles.searchInput, { color: colors.textPrimary }]}
 					iconColor={colors.textSecondary}
 					placeholderTextColor={colors.textMuted}
 				/>
@@ -113,21 +116,23 @@ export default function DiscoverScreen() {
 					<RefreshControl
 						refreshing={refreshing}
 						onRefresh={onRefresh}
-						tintColor={colors.accent}
+						tintColor={colors.primary}
 					/>
 				}
 				ListEmptyComponent={
 					<View style={styles.emptyContainer}>
-						<Ionicons
-							name="storefront-outline"
-							size={64}
-							color={colors.textMuted}
-						/>
-						<Text style={styles.emptyTitle}>{t('customer.home.noBusinesses')}</Text>
-						<Text style={styles.emptySubtitle}>
+						<View style={[styles.emptyIconContainer, { backgroundColor: colors.surfaceVariant }]}>
+							<Ionicons
+								name="storefront-outline"
+								size={48}
+								color={colors.textMuted}
+							/>
+						</View>
+						<Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('customer.home.noBusinesses')}</Text>
+						<Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
 							{searchQuery
 								? t('common.noResults')
-								: 'Barbershops will appear here'}
+								: t('customer.home.businessesWillAppear')}
 						</Text>
 					</View>
 				}
@@ -139,7 +144,6 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		paddingHorizontal: spacing.xl,
@@ -148,12 +152,11 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 32,
-		fontWeight: 'bold',
-		color: colors.textPrimary,
+		fontWeight: '700',
+		letterSpacing: -0.5,
 	},
 	subtitle: {
 		fontSize: 16,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 	},
 	searchContainer: {
@@ -161,14 +164,12 @@ const styles = StyleSheet.create({
 		paddingVertical: spacing.md,
 	},
 	searchbar: {
-		backgroundColor: colors.surface,
 		borderRadius: borderRadius.lg,
 		borderWidth: 1,
-		borderColor: colors.border,
+		elevation: 0,
+		shadowOpacity: 0,
 	},
-	searchInput: {
-		color: colors.textPrimary,
-	},
+	searchInput: {},
 	listContent: {
 		paddingHorizontal: spacing.xl,
 		paddingBottom: spacing.xxl,
@@ -185,9 +186,8 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	businessName: {
-		fontSize: 18,
+		fontSize: 17,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		marginBottom: spacing.xs,
 	},
 	locationRow: {
@@ -197,13 +197,19 @@ const styles = StyleSheet.create({
 	},
 	businessAddress: {
 		fontSize: 14,
-		color: colors.textSecondary,
 		flex: 1,
 	},
 	businessDescription: {
 		fontSize: 13,
-		color: colors.textMuted,
 		marginTop: spacing.xs,
+		lineHeight: 18,
+	},
+	chevronContainer: {
+		width: 32,
+		height: 32,
+		borderRadius: 16,
+		justifyContent: 'center',
+		alignItems: 'center',
 	},
 	emptyContainer: {
 		flex: 1,
@@ -211,16 +217,21 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		paddingTop: spacing.xxl * 2,
 	},
+	emptyIconContainer: {
+		width: 80,
+		height: 80,
+		borderRadius: 40,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginBottom: spacing.md,
+	},
 	emptyTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
-		marginTop: spacing.md,
+		marginTop: spacing.sm,
 	},
 	emptySubtitle: {
 		fontSize: 14,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 	},
 })
-

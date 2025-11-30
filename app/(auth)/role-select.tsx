@@ -4,9 +4,9 @@ import { Text } from 'react-native-paper'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuth, useTranslation } from '../../src/hooks'
+import { useAuth, useTranslation, useThemeColors } from '../../src/hooks'
 import { Button, Card } from '../../src/components/ui'
-import { colors, spacing, borderRadius } from '../../src/constants/theme'
+import { spacing, borderRadius } from '../../src/constants/theme'
 import { UserRole } from '../../src/types'
 
 interface RoleOption {
@@ -24,6 +24,12 @@ const ROLE_OPTIONS: RoleOption[] = [
 		icon: 'person-outline',
 	},
 	{
+		role: 'barber',
+		titleKey: 'auth.roleSelect.barber',
+		descriptionKey: 'auth.roleSelect.barberDescription',
+		icon: 'cut-outline',
+	},
+	{
 		role: 'owner',
 		titleKey: 'auth.roleSelect.owner',
 		descriptionKey: 'auth.roleSelect.ownerDescription',
@@ -34,6 +40,7 @@ const ROLE_OPTIONS: RoleOption[] = [
 export default function RoleSelectScreen() {
 	const { updateRole, isLoading, user } = useAuth()
 	const { t } = useTranslation()
+	const { colors, isDarkMode } = useThemeColors()
 	const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
 
 	const handleContinue = async () => {
@@ -48,13 +55,15 @@ export default function RoleSelectScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
 			<View style={styles.content}>
 				<View style={styles.header}>
-					<Text style={styles.title}>
+					<Text style={[styles.title, { color: colors.textPrimary }]}>
 						{t('auth.roleSelect.title')}, {user?.name?.split(' ')[0]}!
 					</Text>
-					<Text style={styles.subtitle}>{t('auth.roleSelect.subtitle')}</Text>
+					<Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+						{t('auth.roleSelect.subtitle')}
+					</Text>
 				</View>
 
 				<View style={styles.options}>
@@ -64,32 +73,40 @@ export default function RoleSelectScreen() {
 							onPress={() => setSelectedRole(option.role)}
 							style={({ pressed }) => [pressed && styles.pressed]}
 						>
-						<Card
-							style={{
-								...styles.optionCard,
-								...(selectedRole === option.role ? styles.selectedCard : {}),
-							}}
+							<View
+								style={[
+									styles.optionCard,
+									{
+										borderColor: selectedRole === option.role ? colors.primary : colors.border,
+										backgroundColor: selectedRole === option.role ? colors.surfaceVariant : colors.surface,
+									},
+								]}
 							>
 								<View style={styles.optionContent}>
 									<View
 										style={[
 											styles.iconContainer,
-											selectedRole === option.role && styles.selectedIconContainer,
+											{
+												backgroundColor: selectedRole === option.role ? colors.primary : colors.surfaceVariant,
+												borderColor: selectedRole === option.role ? colors.primary : colors.border,
+											},
 										]}
 									>
 										<Ionicons
 											name={option.icon}
-											size={32}
+											size={28}
 											color={
 												selectedRole === option.role
-													? colors.textPrimary
-													: colors.accent
+													? (isDarkMode ? '#000000' : '#ffffff')
+													: colors.textPrimary
 											}
 										/>
 									</View>
 									<View style={styles.optionText}>
-										<Text style={styles.optionTitle}>{t(option.titleKey)}</Text>
-										<Text style={styles.optionDescription}>
+										<Text style={[styles.optionTitle, { color: colors.textPrimary }]}>
+											{t(option.titleKey)}
+										</Text>
+										<Text style={[styles.optionDescription, { color: colors.textSecondary }]}>
 											{t(option.descriptionKey)}
 										</Text>
 									</View>
@@ -97,16 +114,18 @@ export default function RoleSelectScreen() {
 										<View
 											style={[
 												styles.radio,
-												selectedRole === option.role && styles.radioSelected,
+												{
+													borderColor: selectedRole === option.role ? colors.primary : colors.border,
+												},
 											]}
 										>
 											{selectedRole === option.role && (
-												<View style={styles.radioInner} />
+												<View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
 											)}
 										</View>
 									</View>
 								</View>
-							</Card>
+							</View>
 						</Pressable>
 					))}
 				</View>
@@ -128,7 +147,6 @@ export default function RoleSelectScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	content: {
 		flex: 1,
@@ -140,24 +158,21 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 28,
-		fontWeight: 'bold',
-		color: colors.textPrimary,
+		fontWeight: '700',
 		marginBottom: spacing.sm,
+		letterSpacing: -0.5,
 	},
 	subtitle: {
 		fontSize: 16,
-		color: colors.textSecondary,
+		lineHeight: 24,
 	},
 	options: {
 		gap: spacing.md,
 	},
 	optionCard: {
-		borderWidth: 2,
-		borderColor: colors.border,
-	},
-	selectedCard: {
-		borderColor: colors.accent,
-		backgroundColor: colors.surfaceVariant,
+		padding: spacing.lg,
+		borderWidth: 1.5,
+		borderRadius: borderRadius.xl,
 	},
 	optionContent: {
 		flexDirection: 'row',
@@ -165,15 +180,12 @@ const styles = StyleSheet.create({
 		gap: spacing.md,
 	},
 	iconContainer: {
-		width: 60,
-		height: 60,
+		width: 56,
+		height: 56,
 		borderRadius: borderRadius.lg,
-		backgroundColor: colors.surfaceVariant,
 		justifyContent: 'center',
 		alignItems: 'center',
-	},
-	selectedIconContainer: {
-		backgroundColor: colors.accent,
+		borderWidth: 1,
 	},
 	optionText: {
 		flex: 1,
@@ -181,33 +193,27 @@ const styles = StyleSheet.create({
 	optionTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		marginBottom: spacing.xs,
 	},
 	optionDescription: {
 		fontSize: 14,
-		color: colors.textSecondary,
+		lineHeight: 20,
 	},
 	radioContainer: {
 		padding: spacing.xs,
 	},
 	radio: {
-		width: 24,
-		height: 24,
-		borderRadius: 12,
+		width: 22,
+		height: 22,
+		borderRadius: 11,
 		borderWidth: 2,
-		borderColor: colors.border,
 		justifyContent: 'center',
 		alignItems: 'center',
-	},
-	radioSelected: {
-		borderColor: colors.accent,
 	},
 	radioInner: {
 		width: 12,
 		height: 12,
 		borderRadius: 6,
-		backgroundColor: colors.accent,
 	},
 	footer: {
 		marginTop: spacing.xxl,
@@ -216,4 +222,3 @@ const styles = StyleSheet.create({
 		opacity: 0.8,
 	},
 })
-

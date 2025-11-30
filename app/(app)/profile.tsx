@@ -4,14 +4,15 @@ import { Text, Divider } from 'react-native-paper'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuth, useTranslation } from '../../src/hooks'
+import { useAuth, useTranslation, useThemeColors } from '../../src/hooks'
 import { Button, Card, Avatar, Input } from '../../src/components/ui'
 import { LanguageSelector } from '../../src/components/language-selector'
-import { colors, spacing, borderRadius } from '../../src/constants/theme'
+import { spacing, borderRadius } from '../../src/constants/theme'
 
 export default function ProfileScreen() {
 	const { user, signOut, updateProfile, isLoading } = useAuth()
 	const { t } = useTranslation()
+	const { colors, isDarkMode } = useThemeColors()
 	const [isEditing, setIsEditing] = useState(false)
 	const [name, setName] = useState(user?.name || '')
 	const [phone, setPhone] = useState(user?.phone || '')
@@ -27,7 +28,7 @@ export default function ProfileScreen() {
 	}
 
 	const handleSignOut = () => {
-		Alert.alert(t('auth.logout'), 'Are you sure you want to sign out?', [
+		Alert.alert(t('auth.logout'), t('profile.signOutConfirm'), [
 			{ text: t('common.cancel'), style: 'cancel' },
 			{
 				text: t('auth.logout'),
@@ -52,9 +53,9 @@ export default function ProfileScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top']}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
 			<View style={styles.header}>
-				<Text style={styles.title}>{t('profile.title')}</Text>
+				<Text style={[styles.title, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
 			</View>
 
 			<ScrollView
@@ -63,7 +64,7 @@ export default function ProfileScreen() {
 				showsVerticalScrollIndicator={false}
 			>
 				{/* Profile Card */}
-				<Card style={styles.profileCard}>
+				<Card style={styles.profileCard} variant="elevated">
 					<View style={styles.profileHeader}>
 						<Avatar
 							source={user?.photoUrl}
@@ -72,10 +73,10 @@ export default function ProfileScreen() {
 						/>
 						{!isEditing && (
 							<>
-								<Text style={styles.userName}>{user?.name}</Text>
-								<Text style={styles.userEmail}>{user?.email}</Text>
-								<View style={styles.roleBadge}>
-									<Text style={styles.roleText}>
+								<Text style={[styles.userName, { color: colors.textPrimary }]}>{user?.name}</Text>
+								<Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
+								<View style={[styles.roleBadge, { backgroundColor: colors.primary }]}>
+									<Text style={[styles.roleText, { color: isDarkMode ? '#000000' : '#ffffff' }]}>
 										{getRoleName(user?.role || 'customer')}
 									</Text>
 								</View>
@@ -135,50 +136,50 @@ export default function ProfileScreen() {
 				{/* Info Section */}
 				<Card style={styles.infoCard}>
 					<View style={styles.infoRow}>
-						<View style={styles.infoIcon}>
+						<View style={[styles.infoIcon, { backgroundColor: colors.surfaceVariant }]}>
 							<Ionicons
 								name="mail-outline"
 								size={20}
-								color={colors.accent}
+								color={colors.textPrimary}
 							/>
 						</View>
 						<View style={styles.infoContent}>
-							<Text style={styles.infoLabel}>{t('common.email')}</Text>
-							<Text style={styles.infoValue}>{user?.email}</Text>
+							<Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('common.email')}</Text>
+							<Text style={[styles.infoValue, { color: colors.textPrimary }]}>{user?.email}</Text>
 						</View>
 					</View>
 
-					<Divider style={styles.divider} />
+					<Divider style={[styles.divider, { backgroundColor: colors.border }]} />
 
 					<View style={styles.infoRow}>
-						<View style={styles.infoIcon}>
+						<View style={[styles.infoIcon, { backgroundColor: colors.surfaceVariant }]}>
 							<Ionicons
 								name="call-outline"
 								size={20}
-								color={colors.accent}
+								color={colors.textPrimary}
 							/>
 						</View>
 						<View style={styles.infoContent}>
-							<Text style={styles.infoLabel}>{t('common.phone')}</Text>
-							<Text style={styles.infoValue}>
-								{user?.phone || 'Not set'}
+							<Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('common.phone')}</Text>
+							<Text style={[styles.infoValue, { color: colors.textPrimary }]}>
+								{user?.phone || t('profile.notSet')}
 							</Text>
 						</View>
 					</View>
 
-					<Divider style={styles.divider} />
+					<Divider style={[styles.divider, { backgroundColor: colors.border }]} />
 
 					<View style={styles.infoRow}>
-						<View style={styles.infoIcon}>
+						<View style={[styles.infoIcon, { backgroundColor: colors.surfaceVariant }]}>
 							<Ionicons
 								name="person-outline"
 								size={20}
-								color={colors.accent}
+								color={colors.textPrimary}
 							/>
 						</View>
 						<View style={styles.infoContent}>
-							<Text style={styles.infoLabel}>Account Type</Text>
-							<Text style={styles.infoValue}>
+							<Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('profile.accountType')}</Text>
+							<Text style={[styles.infoValue, { color: colors.textPrimary }]}>
 								{getRoleName(user?.role || 'customer')}
 							</Text>
 						</View>
@@ -200,7 +201,7 @@ export default function ProfileScreen() {
 				</Button>
 
 				{/* App Version */}
-				<Text style={styles.version}>BarberBooking v1.0.0</Text>
+				<Text style={[styles.version, { color: colors.textMuted }]}>BarberBooking v1.0.0</Text>
 			</ScrollView>
 		</SafeAreaView>
 	)
@@ -209,7 +210,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		paddingHorizontal: spacing.xl,
@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 32,
-		fontWeight: 'bold',
-		color: colors.textPrimary,
+		fontWeight: '700',
+		letterSpacing: -0.5,
 	},
 	scrollView: {
 		flex: 1,
@@ -237,26 +237,24 @@ const styles = StyleSheet.create({
 	},
 	userName: {
 		fontSize: 24,
-		fontWeight: 'bold',
-		color: colors.textPrimary,
+		fontWeight: '700',
 		marginTop: spacing.md,
 	},
 	userEmail: {
 		fontSize: 14,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 	},
 	roleBadge: {
 		marginTop: spacing.sm,
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.xs,
-		backgroundColor: colors.accent,
 		borderRadius: borderRadius.full,
 	},
 	roleText: {
 		fontSize: 12,
 		fontWeight: '600',
-		color: colors.textPrimary,
+		textTransform: 'uppercase',
+		letterSpacing: 0.5,
 	},
 	editButton: {
 		marginTop: spacing.md,
@@ -290,7 +288,6 @@ const styles = StyleSheet.create({
 		width: 40,
 		height: 40,
 		borderRadius: 20,
-		backgroundColor: colors.surfaceVariant,
 		justifyContent: 'center',
 		alignItems: 'center',
 		marginRight: spacing.md,
@@ -300,26 +297,26 @@ const styles = StyleSheet.create({
 	},
 	infoLabel: {
 		fontSize: 12,
-		color: colors.textSecondary,
+		fontWeight: '500',
+		textTransform: 'uppercase',
+		letterSpacing: 0.3,
 	},
 	infoValue: {
 		fontSize: 16,
-		color: colors.textPrimary,
 		marginTop: spacing.xs,
+		fontWeight: '500',
 	},
 	divider: {
-		backgroundColor: colors.border,
 		marginVertical: spacing.sm,
 	},
 	signOutButton: {
 		marginTop: spacing.md,
-		borderColor: colors.error,
+		borderColor: '#ef4444',
 	},
 	version: {
 		textAlign: 'center',
 		fontSize: 12,
-		color: colors.textMuted,
 		marginTop: spacing.xl,
+		fontWeight: '500',
 	},
 })
-

@@ -4,9 +4,9 @@ import { Text } from 'react-native-paper'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useBusiness, useBooking, useAuth } from '../../../../src/hooks'
+import { useBusiness, useBooking, useAuth, useThemeColors, useTranslation } from '../../../../src/hooks'
 import { Button, Card, LoadingScreen } from '../../../../src/components/ui'
-import { colors, spacing, borderRadius } from '../../../../src/constants/theme'
+import { spacing, borderRadius } from '../../../../src/constants/theme'
 
 // Generate next 14 days
 function getNextDays(count: number) {
@@ -47,6 +47,8 @@ function getDayOfWeek(dateString: string): string {
 export default function BookingScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>()
 	const { user } = useAuth()
+	const { colors, isDarkMode } = useThemeColors()
+	const { t } = useTranslation()
 	const { currentBusiness, services, barbers } = useBusiness()
 	const {
 		selectedServiceId,
@@ -133,17 +135,17 @@ export default function BookingScreen() {
 			})
 
 			Alert.alert(
-				'Booking Confirmed!',
-				`Your appointment is scheduled for ${selectedDate} at ${selectedTimeSlot}`,
+				t('customer.booking.confirmed'),
+				t('customer.booking.confirmedMessage'),
 				[
 					{
-						text: 'View Bookings',
+						text: t('customer.booking.viewBookings'),
 						onPress: () => router.replace('/(app)/my-bookings'),
 					},
 				]
 			)
 		} catch (error) {
-			Alert.alert('Booking Failed', 'Please try again later.')
+			Alert.alert(t('customer.booking.failed'), t('customer.booking.tryAgain'))
 			console.error('Booking error:', error)
 		} finally {
 			setIsBooking(false)
@@ -151,16 +153,16 @@ export default function BookingScreen() {
 	}
 
 	if (!currentBusiness || !selectedService || !selectedBarber) {
-		return <LoadingScreen message="Loading..." />
+		return <LoadingScreen message={t('common.loading')} />
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top']}>
-			<View style={styles.header}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+			<View style={[styles.header, { borderBottomColor: colors.border }]}>
 				<Pressable onPress={() => router.back()} style={styles.backButton}>
 					<Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
 				</Pressable>
-				<Text style={styles.headerTitle}>Book Appointment</Text>
+				<Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('customer.booking.title')}</Text>
 				<View style={styles.backButton} />
 			</View>
 
@@ -171,30 +173,30 @@ export default function BookingScreen() {
 			>
 				{/* Summary Card */}
 				<Card style={styles.summaryCard}>
-					<Text style={styles.summaryTitle}>Booking Summary</Text>
+					<Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>{t('customer.booking.summary')}</Text>
 					<View style={styles.summaryRow}>
-						<Text style={styles.summaryLabel}>Service</Text>
-						<Text style={styles.summaryValue}>{selectedService.name}</Text>
+						<Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('customer.booking.service')}</Text>
+						<Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{selectedService.name}</Text>
 					</View>
 					<View style={styles.summaryRow}>
-						<Text style={styles.summaryLabel}>Barber</Text>
-						<Text style={styles.summaryValue}>{selectedBarber.name}</Text>
+						<Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('customer.booking.barber')}</Text>
+						<Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{selectedBarber.name}</Text>
 					</View>
 					<View style={styles.summaryRow}>
-						<Text style={styles.summaryLabel}>Duration</Text>
-						<Text style={styles.summaryValue}>
+						<Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('customer.booking.duration')}</Text>
+						<Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
 							{selectedService.duration} min
 						</Text>
 					</View>
 					<View style={styles.summaryRow}>
-						<Text style={styles.summaryLabel}>Price</Text>
-						<Text style={styles.summaryPrice}>${selectedService.price}</Text>
+						<Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('customer.booking.price')}</Text>
+						<Text style={[styles.summaryPrice, { color: colors.textPrimary }]}>${selectedService.price}</Text>
 					</View>
 				</Card>
 
 				{/* Date Selection */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Select Date</Text>
+					<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('customer.business.selectDate')}</Text>
 					<ScrollView
 						horizontal
 						showsHorizontalScrollIndicator={false}
@@ -208,13 +210,16 @@ export default function BookingScreen() {
 								<View
 									style={[
 										styles.dateCard,
-										selectedDate === day.date && styles.selectedDateCard,
+										{
+											borderColor: selectedDate === day.date ? colors.primary : colors.border,
+											backgroundColor: selectedDate === day.date ? colors.primary : colors.card,
+										},
 									]}
 								>
 									<Text
 										style={[
 											styles.dayName,
-											selectedDate === day.date && styles.selectedText,
+											{ color: selectedDate === day.date ? (isDarkMode ? '#000000' : '#ffffff') : colors.textSecondary },
 										]}
 									>
 										{day.dayName}
@@ -222,7 +227,7 @@ export default function BookingScreen() {
 									<Text
 										style={[
 											styles.dayNumber,
-											selectedDate === day.date && styles.selectedText,
+											{ color: selectedDate === day.date ? (isDarkMode ? '#000000' : '#ffffff') : colors.textPrimary },
 										]}
 									>
 										{day.dayNumber}
@@ -230,7 +235,7 @@ export default function BookingScreen() {
 									<Text
 										style={[
 											styles.month,
-											selectedDate === day.date && styles.selectedText,
+											{ color: selectedDate === day.date ? (isDarkMode ? '#000000' : '#ffffff') : colors.textSecondary },
 										]}
 									>
 										{day.month}
@@ -244,12 +249,12 @@ export default function BookingScreen() {
 				{/* Time Selection */}
 				{selectedDate && (
 					<View style={styles.section}>
-						<Text style={styles.sectionTitle}>Select Time</Text>
+						<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('customer.business.selectTime')}</Text>
 						{isLoading ? (
-							<Text style={styles.loadingText}>Loading available times...</Text>
+							<Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('customer.booking.loadingTimes')}</Text>
 						) : availableSlots.length === 0 ? (
-							<Text style={styles.emptyText}>
-								No available slots for this date
+							<Text style={[styles.emptyText, { color: colors.textMuted }]}>
+								{t('customer.business.noAvailableSlots')}
 							</Text>
 						) : (
 							<View style={styles.timeSlotsGrid}>
@@ -264,15 +269,21 @@ export default function BookingScreen() {
 										<View
 											style={[
 												styles.timeSlot,
-												!slot.available && styles.unavailableSlot,
-												selectedTimeSlot === slot.time && styles.selectedTimeSlot,
+												{
+													borderColor: selectedTimeSlot === slot.time ? colors.primary : colors.border,
+													backgroundColor: selectedTimeSlot === slot.time ? colors.primary : colors.card,
+													opacity: slot.available ? 1 : 0.4,
+												},
 											]}
 										>
 											<Text
 												style={[
 													styles.timeText,
-													!slot.available && styles.unavailableText,
-													selectedTimeSlot === slot.time && styles.selectedText,
+													{
+														color: selectedTimeSlot === slot.time
+															? (isDarkMode ? '#000000' : '#ffffff')
+															: (slot.available ? colors.textPrimary : colors.textMuted),
+													},
 												]}
 											>
 												{slot.time}
@@ -287,17 +298,17 @@ export default function BookingScreen() {
 			</ScrollView>
 
 			{/* Confirm Button */}
-			<View style={styles.footer}>
+			<View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.surface }]}>
 				<Button
 					onPress={handleConfirmBooking}
 					loading={isBooking}
 					disabled={!selectedDate || !selectedTimeSlot || isBooking}
 				>
 					{!selectedDate
-						? 'Select a Date'
+						? t('customer.booking.selectADate')
 						: !selectedTimeSlot
-							? 'Select a Time'
-							: `Confirm Booking - $${selectedService.price}`}
+							? t('customer.booking.selectATime')
+							: `${t('customer.booking.confirmButton')} - $${selectedService.price}`}
 				</Button>
 			</View>
 		</SafeAreaView>
@@ -307,7 +318,6 @@ export default function BookingScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		flexDirection: 'row',
@@ -316,7 +326,6 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.md,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	backButton: {
 		width: 40,
@@ -328,7 +337,6 @@ const styles = StyleSheet.create({
 		flex: 1,
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		textAlign: 'center',
 	},
 	scrollView: {
@@ -344,7 +352,6 @@ const styles = StyleSheet.create({
 	summaryTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		marginBottom: spacing.md,
 	},
 	summaryRow: {
@@ -354,17 +361,14 @@ const styles = StyleSheet.create({
 	},
 	summaryLabel: {
 		fontSize: 14,
-		color: colors.textSecondary,
 	},
 	summaryValue: {
 		fontSize: 14,
 		fontWeight: '500',
-		color: colors.textPrimary,
 	},
 	summaryPrice: {
-		fontSize: 16,
-		fontWeight: 'bold',
-		color: colors.accent,
+		fontSize: 18,
+		fontWeight: '700',
 	},
 	section: {
 		marginBottom: spacing.xl,
@@ -372,7 +376,6 @@ const styles = StyleSheet.create({
 	sectionTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		marginBottom: spacing.md,
 	},
 	datesContainer: {
@@ -382,41 +385,29 @@ const styles = StyleSheet.create({
 	dateCard: {
 		alignItems: 'center',
 		padding: spacing.md,
-		backgroundColor: colors.card,
-		borderRadius: borderRadius.lg,
-		borderWidth: 2,
-		borderColor: colors.border,
+		borderRadius: borderRadius.xl,
+		borderWidth: 1.5,
 		minWidth: 70,
-	},
-	selectedDateCard: {
-		borderColor: colors.accent,
-		backgroundColor: colors.accent,
 	},
 	dayName: {
 		fontSize: 12,
-		color: colors.textSecondary,
 		marginBottom: spacing.xs,
+		fontWeight: '500',
 	},
 	dayNumber: {
 		fontSize: 20,
-		fontWeight: 'bold',
-		color: colors.textPrimary,
+		fontWeight: '700',
 	},
 	month: {
 		fontSize: 12,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
-	},
-	selectedText: {
-		color: colors.textPrimary,
+		fontWeight: '500',
 	},
 	loadingText: {
 		fontSize: 14,
-		color: colors.textSecondary,
 	},
 	emptyText: {
 		fontSize: 14,
-		color: colors.textMuted,
 	},
 	timeSlotsGrid: {
 		flexDirection: 'row',
@@ -426,31 +417,15 @@ const styles = StyleSheet.create({
 	timeSlot: {
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.md,
-		backgroundColor: colors.card,
-		borderRadius: borderRadius.md,
-		borderWidth: 2,
-		borderColor: colors.border,
-	},
-	unavailableSlot: {
-		opacity: 0.4,
-	},
-	selectedTimeSlot: {
-		borderColor: colors.accent,
-		backgroundColor: colors.accent,
+		borderRadius: borderRadius.lg,
+		borderWidth: 1.5,
 	},
 	timeText: {
 		fontSize: 14,
 		fontWeight: '500',
-		color: colors.textPrimary,
-	},
-	unavailableText: {
-		color: colors.textMuted,
 	},
 	footer: {
 		padding: spacing.xl,
 		borderTopWidth: 1,
-		borderTopColor: colors.border,
-		backgroundColor: colors.surface,
 	},
 })
-

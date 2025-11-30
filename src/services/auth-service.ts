@@ -5,6 +5,8 @@ import {
 	onAuthStateChanged,
 	updateProfile,
 	sendPasswordResetEmail,
+	GoogleAuthProvider,
+	signInWithCredential,
 	User as FirebaseUser,
 } from 'firebase/auth'
 import {
@@ -14,8 +16,12 @@ import {
 	updateDoc,
 	serverTimestamp,
 } from 'firebase/firestore'
+import * as Google from 'expo-auth-session/providers/google'
+import * as WebBrowser from 'expo-web-browser'
 import { auth, db } from './firebase'
 import { User, UserRole } from '../types'
+
+WebBrowser.maybeCompleteAuthSession()
 
 /**
  * Creates a new user account with email and password
@@ -87,6 +93,67 @@ export async function signIn(email: string, password: string): Promise<User> {
 		businessId: userData.businessId,
 		createdAt: userData.createdAt?.toDate() || new Date(),
 		updatedAt: userData.updatedAt?.toDate() || new Date(),
+	}
+}
+
+/**
+ * Signs in or signs up a user with Google
+ */
+export async function signInWithGoogle(idToken: string): Promise<User> {
+	// Create a Google credential with the token
+	const credential = GoogleAuthProvider.credential(idToken)
+	
+	// Sign in with the credential
+	const userCredential = await signInWithCredential(auth, credential)
+	const { user: firebaseUser } = userCredential
+
+	// Check if user already exists in Firestore
+	const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+
+	if (userDoc.exists()) {
+		// Existing user - return user data
+		const userData = userDoc.data()
+		return {
+			id: firebaseUser.uid,
+			email: userData.email,
+			name: userData.name,
+			phone: userData.phone || '',
+			photoUrl: userData.photoUrl || firebaseUser.photoURL || null,
+			role: userData.role,
+			businessId: userData.businessId,
+			createdAt: userData.createdAt?.toDate() || new Date(),
+			updatedAt: userData.updatedAt?.toDate() || new Date(),
+		}
+	} else {
+		// New user - create user document
+		const userData: Omit<User, 'id'> = {
+			email: firebaseUser.email!,
+			name: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
+			phone: '',
+			photoUrl: firebaseUser.photoURL || null,
+			role: 'customer', // Default role, will be updated after role selection
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		}
+
+		// Prepare data for Firestore
+		const firestoreData: Record<string, unknown> = {
+			email: userData.email,
+			name: userData.name,
+			phone: userData.phone,
+			role: userData.role,
+			createdAt: serverTimestamp(),
+			updatedAt: serverTimestamp(),
+		}
+		
+		// Add photoUrl if exists
+		if (firebaseUser.photoURL) {
+			firestoreData.photoUrl = firebaseUser.photoURL
+		}
+
+		await setDoc(doc(db, 'users', firebaseUser.uid), firestoreData)
+
+		return { id: firebaseUser.uid, ...userData }
 	}
 }
 

@@ -4,13 +4,15 @@ import { Text } from 'react-native-paper'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useBusiness, useBooking } from '../../../../src/hooks'
+import { useBusiness, useBooking, useThemeColors, useTranslation } from '../../../../src/hooks'
 import { Button, Card, Avatar, LoadingScreen } from '../../../../src/components/ui'
-import { colors, spacing, borderRadius } from '../../../../src/constants/theme'
+import { spacing, borderRadius } from '../../../../src/constants/theme'
 import { Service, Barber } from '../../../../src/types'
 
 export default function BusinessDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>()
+	const { colors, isDarkMode } = useThemeColors()
+	const { t } = useTranslation()
 	const {
 		currentBusiness,
 		services,
@@ -46,16 +48,16 @@ export default function BusinessDetailScreen() {
 	}
 
 	if (isLoading || !currentBusiness) {
-		return <LoadingScreen message="Loading business..." />
+		return <LoadingScreen message={t('common.loading')} />
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top']}>
-			<View style={styles.header}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+			<View style={[styles.header, { borderBottomColor: colors.border }]}>
 				<Pressable onPress={() => router.back()} style={styles.backButton}>
 					<Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
 				</Pressable>
-				<Text style={styles.headerTitle} numberOfLines={1}>
+				<Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
 					{currentBusiness.name}
 				</Text>
 				<View style={styles.backButton} />
@@ -67,23 +69,23 @@ export default function BusinessDetailScreen() {
 				showsVerticalScrollIndicator={false}
 			>
 				{/* Business Info */}
-				<View style={styles.businessInfo}>
+				<View style={[styles.businessInfo, { borderBottomColor: colors.border }]}>
 					<Avatar
 						source={currentBusiness.logoUrl}
 						name={currentBusiness.name}
 						size="large"
 					/>
-					<Text style={styles.businessName}>{currentBusiness.name}</Text>
+					<Text style={[styles.businessName, { color: colors.textPrimary }]}>{currentBusiness.name}</Text>
 					<View style={styles.locationRow}>
 						<Ionicons
 							name="location-outline"
 							size={16}
 							color={colors.textSecondary}
 						/>
-						<Text style={styles.address}>{currentBusiness.address}</Text>
+						<Text style={[styles.address, { color: colors.textSecondary }]}>{currentBusiness.address}</Text>
 					</View>
 					{currentBusiness.description && (
-						<Text style={styles.description}>
+						<Text style={[styles.description, { color: colors.textMuted }]}>
 							{currentBusiness.description}
 						</Text>
 					)}
@@ -91,26 +93,29 @@ export default function BusinessDetailScreen() {
 
 				{/* Services */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Services</Text>
+					<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('customer.business.services')}</Text>
 					{services.length === 0 ? (
-						<Text style={styles.emptyText}>No services available</Text>
+						<Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('customer.business.noServices')}</Text>
 					) : (
 						services.map((service) => (
 							<Pressable
 								key={service.id}
 								onPress={() => handleServiceSelect(service)}
 							>
-							<Card
-								style={{
-									...styles.serviceCard,
-									...(selectedServiceId === service.id ? styles.selectedCard : {}),
-								}}
+								<Card
+									style={[
+										styles.serviceCard,
+										{
+											borderColor: selectedServiceId === service.id ? colors.primary : colors.border,
+											backgroundColor: selectedServiceId === service.id ? colors.surfaceVariant : colors.card,
+										},
+									]}
 								>
 									<View style={styles.serviceContent}>
 										<View style={styles.serviceInfo}>
-											<Text style={styles.serviceName}>{service.name}</Text>
+											<Text style={[styles.serviceName, { color: colors.textPrimary }]}>{service.name}</Text>
 											{service.description && (
-												<Text style={styles.serviceDescription}>
+												<Text style={[styles.serviceDescription, { color: colors.textSecondary }]}>
 													{service.description}
 												</Text>
 											)}
@@ -121,19 +126,19 @@ export default function BusinessDetailScreen() {
 														size={14}
 														color={colors.textSecondary}
 													/>
-													<Text style={styles.metaText}>
+													<Text style={[styles.metaText, { color: colors.textSecondary }]}>
 														{service.duration} min
 													</Text>
 												</View>
 											</View>
 										</View>
 										<View style={styles.priceContainer}>
-											<Text style={styles.price}>${service.price}</Text>
+											<Text style={[styles.price, { color: colors.textPrimary }]}>${service.price}</Text>
 											{selectedServiceId === service.id && (
 												<Ionicons
 													name="checkmark-circle"
 													size={24}
-													color={colors.accent}
+													color={colors.primary}
 												/>
 											)}
 										</View>
@@ -146,9 +151,9 @@ export default function BusinessDetailScreen() {
 
 				{/* Barbers */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Our Barbers</Text>
+					<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('customer.business.barbers')}</Text>
 					{barbers.length === 0 ? (
-						<Text style={styles.emptyText}>No barbers available</Text>
+						<Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('customer.business.noBarbers')}</Text>
 					) : (
 						<ScrollView
 							horizontal
@@ -163,7 +168,10 @@ export default function BusinessDetailScreen() {
 									<View
 										style={[
 											styles.barberCard,
-											selectedBarberId === barber.id && styles.selectedBarberCard,
+											{
+												borderColor: selectedBarberId === barber.id ? colors.primary : colors.border,
+												backgroundColor: selectedBarberId === barber.id ? colors.surfaceVariant : colors.card,
+											},
 										]}
 									>
 										<Avatar
@@ -171,18 +179,18 @@ export default function BusinessDetailScreen() {
 											name={barber.name}
 											size="medium"
 										/>
-										<Text style={styles.barberName}>{barber.name}</Text>
+										<Text style={[styles.barberName, { color: colors.textPrimary }]}>{barber.name}</Text>
 										{barber.specialties.length > 0 && (
-											<Text style={styles.barberSpecialty} numberOfLines={1}>
+											<Text style={[styles.barberSpecialty, { color: colors.textSecondary }]} numberOfLines={1}>
 												{barber.specialties[0]}
 											</Text>
 										)}
 										{selectedBarberId === barber.id && (
-											<View style={styles.selectedBadge}>
+											<View style={[styles.selectedBadge, { backgroundColor: colors.primary }]}>
 												<Ionicons
 													name="checkmark"
 													size={12}
-													color={colors.textPrimary}
+													color={isDarkMode ? '#000000' : '#ffffff'}
 												/>
 											</View>
 										)}
@@ -195,14 +203,14 @@ export default function BusinessDetailScreen() {
 			</ScrollView>
 
 			{/* Book Now Button */}
-			<View style={styles.footer}>
+			<View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.surface }]}>
 				<Button
 					onPress={handleBookNow}
 					disabled={!selectedServiceId || !selectedBarberId}
 				>
 					{!selectedServiceId || !selectedBarberId
-						? 'Select Service & Barber'
-						: 'Choose Date & Time'}
+						? t('customer.business.selectServiceBarber')
+						: t('customer.business.chooseDateTime')}
 				</Button>
 			</View>
 		</SafeAreaView>
@@ -212,7 +220,6 @@ export default function BusinessDetailScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		flexDirection: 'row',
@@ -221,7 +228,6 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.md,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	backButton: {
 		width: 40,
@@ -233,7 +239,6 @@ const styles = StyleSheet.create({
 		flex: 1,
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		textAlign: 'center',
 	},
 	scrollView: {
@@ -246,12 +251,10 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		padding: spacing.xl,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	businessName: {
 		fontSize: 24,
-		fontWeight: 'bold',
-		color: colors.textPrimary,
+		fontWeight: '700',
 		marginTop: spacing.md,
 	},
 	locationRow: {
@@ -262,14 +265,13 @@ const styles = StyleSheet.create({
 	},
 	address: {
 		fontSize: 14,
-		color: colors.textSecondary,
 	},
 	description: {
 		fontSize: 14,
-		color: colors.textMuted,
 		textAlign: 'center',
 		marginTop: spacing.md,
 		paddingHorizontal: spacing.xl,
+		lineHeight: 20,
 	},
 	section: {
 		paddingHorizontal: spacing.xl,
@@ -278,21 +280,16 @@ const styles = StyleSheet.create({
 	sectionTitle: {
 		fontSize: 20,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		marginBottom: spacing.md,
 	},
 	emptyText: {
 		fontSize: 14,
-		color: colors.textMuted,
 	},
 	serviceCard: {
 		marginBottom: spacing.sm,
-		borderWidth: 2,
-		borderColor: 'transparent',
-	},
-	selectedCard: {
-		borderColor: colors.accent,
-		backgroundColor: colors.surfaceVariant,
+		borderWidth: 1.5,
+		borderRadius: borderRadius.xl,
+		padding: spacing.md,
 	},
 	serviceContent: {
 		flexDirection: 'row',
@@ -305,11 +302,9 @@ const styles = StyleSheet.create({
 	serviceName: {
 		fontSize: 16,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	serviceDescription: {
 		fontSize: 13,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 	},
 	serviceMeta: {
@@ -324,7 +319,7 @@ const styles = StyleSheet.create({
 	},
 	metaText: {
 		fontSize: 12,
-		color: colors.textSecondary,
+		fontWeight: '500',
 	},
 	priceContainer: {
 		alignItems: 'flex-end',
@@ -332,8 +327,7 @@ const styles = StyleSheet.create({
 	},
 	price: {
 		fontSize: 20,
-		fontWeight: 'bold',
-		color: colors.accent,
+		fontWeight: '700',
 	},
 	barbersContainer: {
 		gap: spacing.md,
@@ -342,26 +336,18 @@ const styles = StyleSheet.create({
 	barberCard: {
 		alignItems: 'center',
 		padding: spacing.md,
-		backgroundColor: colors.card,
-		borderRadius: borderRadius.lg,
-		borderWidth: 2,
-		borderColor: colors.border,
+		borderRadius: borderRadius.xl,
+		borderWidth: 1.5,
 		width: 100,
-	},
-	selectedBarberCard: {
-		borderColor: colors.accent,
-		backgroundColor: colors.surfaceVariant,
 	},
 	barberName: {
 		fontSize: 14,
 		fontWeight: '600',
-		color: colors.textPrimary,
 		marginTop: spacing.sm,
 		textAlign: 'center',
 	},
 	barberSpecialty: {
 		fontSize: 11,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 		textAlign: 'center',
 	},
@@ -372,15 +358,11 @@ const styles = StyleSheet.create({
 		width: 20,
 		height: 20,
 		borderRadius: 10,
-		backgroundColor: colors.accent,
 		justifyContent: 'center',
 		alignItems: 'center',
 	},
 	footer: {
 		padding: spacing.xl,
 		borderTopWidth: 1,
-		borderTopColor: colors.border,
-		backgroundColor: colors.surface,
 	},
 })
-

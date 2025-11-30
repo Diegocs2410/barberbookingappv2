@@ -16,9 +16,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useAuth, useBusiness } from '../../../src/hooks'
+import { useAuth, useBusiness, useThemeColors } from '../../../src/hooks'
 import { Card, Button, Input, LoadingScreen } from '../../../src/components/ui'
-import { colors, spacing, borderRadius } from '../../../src/constants/theme'
+import { spacing, borderRadius } from '../../../src/constants/theme'
 import { Service } from '../../../src/types'
 
 const serviceSchema = z.object({
@@ -36,6 +36,7 @@ type ServiceFormData = z.infer<typeof serviceSchema>
 
 export default function ServicesScreen() {
 	const { user } = useAuth()
+	const { colors } = useThemeColors()
 	const {
 		currentBusiness,
 		services,
@@ -150,9 +151,9 @@ export default function ServicesScreen() {
 		<Card style={styles.serviceCard}>
 			<View style={styles.serviceContent}>
 				<View style={styles.serviceInfo}>
-					<Text style={styles.serviceName}>{item.name}</Text>
+					<Text style={[styles.serviceName, { color: colors.textPrimary }]}>{item.name}</Text>
 					{item.description && (
-						<Text style={styles.serviceDescription}>{item.description}</Text>
+						<Text style={[styles.serviceDescription, { color: colors.textSecondary }]}>{item.description}</Text>
 					)}
 					<View style={styles.serviceMeta}>
 						<View style={styles.metaItem}>
@@ -161,18 +162,18 @@ export default function ServicesScreen() {
 								size={14}
 								color={colors.textSecondary}
 							/>
-							<Text style={styles.metaText}>{item.duration} min</Text>
+							<Text style={[styles.metaText, { color: colors.textSecondary }]}>{item.duration} min</Text>
 						</View>
 					</View>
 				</View>
 				<View style={styles.serviceRight}>
-					<Text style={styles.servicePrice}>${item.price}</Text>
+					<Text style={[styles.servicePrice, { color: colors.textPrimary }]}>${item.price}</Text>
 					<View style={styles.serviceActions}>
 						<Pressable
 							style={styles.iconButton}
 							onPress={() => openEditModal(item)}
 						>
-							<Ionicons name="pencil" size={18} color={colors.accent} />
+							<Ionicons name="pencil" size={18} color={colors.textPrimary} />
 						</Pressable>
 						<Pressable
 							style={styles.iconButton}
@@ -191,14 +192,14 @@ export default function ServicesScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top']}>
-			<View style={styles.header}>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+			<View style={[styles.header, { borderBottomColor: colors.border }]}>
 				<Pressable onPress={() => router.back()} style={styles.backButton}>
 					<Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
 				</Pressable>
-				<Text style={styles.headerTitle}>Services</Text>
+				<Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Services</Text>
 				<Pressable onPress={openAddModal} style={styles.addButton}>
-					<Ionicons name="add" size={24} color={colors.accent} />
+					<Ionicons name="add" size={24} color={colors.textPrimary} />
 				</Pressable>
 			</View>
 
@@ -210,13 +211,15 @@ export default function ServicesScreen() {
 				showsVerticalScrollIndicator={false}
 				ListEmptyComponent={
 					<View style={styles.emptyContainer}>
-						<Ionicons
-							name="cut-outline"
-							size={64}
-							color={colors.textMuted}
-						/>
-						<Text style={styles.emptyTitle}>No services yet</Text>
-						<Text style={styles.emptySubtitle}>
+						<View style={[styles.emptyIconContainer, { backgroundColor: colors.surfaceVariant }]}>
+							<Ionicons
+								name="cut-outline"
+								size={40}
+								color={colors.textMuted}
+							/>
+						</View>
+						<Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No services yet</Text>
+						<Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
 							Add your first service to start accepting bookings
 						</Text>
 						<Button onPress={openAddModal} style={styles.emptyButton}>
@@ -235,14 +238,14 @@ export default function ServicesScreen() {
 			>
 				<KeyboardAvoidingView
 					behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-					style={styles.modalContainer}
+					style={[styles.modalContainer, { backgroundColor: colors.background }]}
 				>
 					<SafeAreaView style={styles.modalContent}>
-						<View style={styles.modalHeader}>
+						<View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
 							<Pressable onPress={() => setModalVisible(false)}>
-								<Text style={styles.cancelText}>Cancel</Text>
+								<Text style={[styles.cancelText, { color: colors.textPrimary }]}>Cancel</Text>
 							</Pressable>
-							<Text style={styles.modalTitle}>
+							<Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
 								{editingService ? 'Edit Service' : 'Add Service'}
 							</Text>
 							<View style={{ width: 50 }} />
@@ -331,7 +334,6 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		flexDirection: 'row',
@@ -340,7 +342,6 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.md,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	backButton: {
 		width: 40,
@@ -351,7 +352,6 @@ const styles = StyleSheet.create({
 	headerTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	addButton: {
 		width: 40,
@@ -376,11 +376,9 @@ const styles = StyleSheet.create({
 	serviceName: {
 		fontSize: 16,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	serviceDescription: {
 		fontSize: 13,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 	},
 	serviceMeta: {
@@ -395,15 +393,14 @@ const styles = StyleSheet.create({
 	},
 	metaText: {
 		fontSize: 12,
-		color: colors.textSecondary,
+		fontWeight: '500',
 	},
 	serviceRight: {
 		alignItems: 'flex-end',
 	},
 	servicePrice: {
 		fontSize: 18,
-		fontWeight: 'bold',
-		color: colors.accent,
+		fontWeight: '700',
 	},
 	serviceActions: {
 		flexDirection: 'row',
@@ -419,15 +416,21 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		paddingTop: spacing.xxl * 2,
 	},
+	emptyIconContainer: {
+		width: 80,
+		height: 80,
+		borderRadius: 40,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginBottom: spacing.md,
+	},
 	emptyTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
-		marginTop: spacing.md,
+		marginTop: spacing.sm,
 	},
 	emptySubtitle: {
 		fontSize: 14,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 		textAlign: 'center',
 		paddingHorizontal: spacing.xl,
@@ -437,7 +440,6 @@ const styles = StyleSheet.create({
 	},
 	modalContainer: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	modalContent: {
 		flex: 1,
@@ -449,16 +451,14 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.md,
 		borderBottomWidth: 1,
-		borderBottomColor: colors.border,
 	},
 	cancelText: {
 		fontSize: 16,
-		color: colors.accent,
+		fontWeight: '500',
 	},
 	modalTitle: {
 		fontSize: 18,
 		fontWeight: '600',
-		color: colors.textPrimary,
 	},
 	form: {
 		padding: spacing.xl,
@@ -474,4 +474,3 @@ const styles = StyleSheet.create({
 		marginTop: spacing.lg,
 	},
 })
-

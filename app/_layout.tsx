@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { useColorScheme } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { PaperProvider } from 'react-native-paper'
@@ -7,7 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import * as SplashScreen from 'expo-splash-screen'
 import { store } from '../src/store'
-import { darkTheme, colors } from '../src/constants/theme'
+import { lightTheme, darkTheme, colors } from '../src/constants/theme'
 import { useAuth } from '../src/hooks'
 import { LoadingScreen } from '../src/components/ui'
 
@@ -16,6 +17,8 @@ SplashScreen.preventAutoHideAsync()
 
 function RootLayoutNav() {
 	const { isLoading, isAuthenticated, user } = useAuth()
+	const colorScheme = useColorScheme()
+	const isDarkMode = colorScheme === 'dark'
 
 	useEffect(() => {
 		if (!isLoading) {
@@ -32,11 +35,13 @@ function RootLayoutNav() {
 
 	return (
 		<>
-			<StatusBar style="light" />
+			<StatusBar style={isDarkMode ? 'light' : 'dark'} />
 			<Stack
 				screenOptions={{
 					headerShown: false,
-					contentStyle: { backgroundColor: colors.background },
+					contentStyle: {
+						backgroundColor: isDarkMode ? '#000000' : colors.background
+					},
 					animation: 'slide_from_right',
 				}}
 			>
@@ -53,11 +58,14 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+	const colorScheme = useColorScheme()
+	const theme = colorScheme === 'dark' ? darkTheme : lightTheme
+
 	return (
 		<GestureHandlerRootView style={{ flex: 1 }}>
 			<SafeAreaProvider>
 				<ReduxProvider store={store}>
-					<PaperProvider theme={darkTheme}>
+					<PaperProvider theme={theme}>
 						<RootLayoutNav />
 					</PaperProvider>
 				</ReduxProvider>
@@ -65,4 +73,3 @@ export default function RootLayout() {
 		</GestureHandlerRootView>
 	)
 }
-

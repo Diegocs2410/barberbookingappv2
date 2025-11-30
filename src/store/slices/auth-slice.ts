@@ -42,6 +42,22 @@ export const signIn = createAsyncThunk(
     }
 )
 
+export const signInWithGoogle = createAsyncThunk(
+    'auth/signInWithGoogle',
+    async (
+        { idToken }: { idToken: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            const user = await authService.signInWithGoogle(idToken)
+            return user
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Google sign in failed'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 export const signOut = createAsyncThunk(
     'auth/signOut',
     async (_, { rejectWithValue }) => {
@@ -144,6 +160,22 @@ const authSlice = createSlice({
                 state.isAuthenticated = true
             })
             .addCase(signIn.rejected, (state, action) => {
+                state.isLoading = false
+                state.error = action.payload as string
+            })
+
+        // Sign In with Google
+        builder
+            .addCase(signInWithGoogle.pending, (state) => {
+                state.isLoading = true
+                state.error = null
+            })
+            .addCase(signInWithGoogle.fulfilled, (state, action) => {
+                state.isLoading = false
+                state.user = action.payload
+                state.isAuthenticated = true
+            })
+            .addCase(signInWithGoogle.rejected, (state, action) => {
                 state.isLoading = false
                 state.error = action.payload as string
             })

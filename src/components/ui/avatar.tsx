@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet, View, Image } from 'react-native'
 import { Text } from 'react-native-paper'
-import { colors, borderRadius } from '../../constants/theme'
+import { useThemeColors } from '../../hooks'
 
 interface AvatarProps {
 	source?: string | null
@@ -21,7 +21,12 @@ const FONT_SIZES = {
 	large: 40,
 }
 
+/**
+ * Componente de avatar reutilizable
+ * Muestra imagen o iniciales del usuario con soporte para temas
+ */
 export function Avatar({ source, name, size = 'medium' }: AvatarProps) {
+	const { colors, isDarkMode } = useThemeColors()
 	const dimension = SIZES[size]
 	const fontSize = FONT_SIZES[size]
 
@@ -43,6 +48,8 @@ export function Avatar({ source, name, size = 'medium' }: AvatarProps) {
 						width: dimension,
 						height: dimension,
 						borderRadius: dimension / 2,
+						backgroundColor: colors.surfaceVariant,
+						borderColor: colors.border,
 					},
 				]}
 			/>
@@ -57,26 +64,28 @@ export function Avatar({ source, name, size = 'medium' }: AvatarProps) {
 					width: dimension,
 					height: dimension,
 					borderRadius: dimension / 2,
+					backgroundColor: colors.primary,
+					borderColor: colors.primary,
 				},
 			]}
 		>
-			<Text style={[styles.initials, { fontSize }]}>{initials}</Text>
+			<Text style={[styles.initials, { fontSize, color: isDarkMode ? '#000000' : '#ffffff' }]}>
+				{initials}
+			</Text>
 		</View>
 	)
 }
 
 const styles = StyleSheet.create({
 	avatar: {
-		backgroundColor: colors.surfaceVariant,
+		borderWidth: 2,
 	},
 	placeholder: {
-		backgroundColor: colors.accent,
 		justifyContent: 'center',
 		alignItems: 'center',
+		borderWidth: 2,
 	},
 	initials: {
-		color: colors.textPrimary,
-		fontWeight: 'bold',
+		fontWeight: '600',
 	},
 })
-
