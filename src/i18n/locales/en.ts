@@ -24,6 +24,10 @@ export default {
 		name: 'Name',
 		phone: 'Phone',
 		address: 'Address',
+		yes: 'Yes',
+		no: 'No',
+		ok: 'OK',
+		cancelled: 'Cancelled',
 	},
 	auth: {
 		login: {
@@ -85,6 +89,7 @@ export default {
 			title: 'Find Your Barbershop',
 			subtitle: 'Book your next appointment',
 			searchPlaceholder: 'Search barbershops...',
+			nearbyBarbers: 'Barbershops Near You',
 			noBusinesses: 'No barbershops available',
 			businessesWillAppear: 'Barbershops will appear here',
 			viewDetails: 'View Details',
@@ -129,6 +134,7 @@ export default {
 		},
 		myBookings: {
 			title: 'My Bookings',
+			loading: 'Loading your bookings...',
 			upcoming: 'Upcoming',
 			past: 'Past',
 			cancelled: 'Cancelled',
@@ -138,9 +144,13 @@ export default {
 			bookToStart: 'Book an appointment to get started',
 			pastWillAppear: 'Your past bookings will appear here',
 			cancelBooking: 'Cancel Booking',
+			cancelTitle: 'Cancel Booking',
+			cancelMessage: 'Are you sure you want to cancel this appointment?',
 			cancelConfirm: 'Are you sure you want to cancel this appointment?',
 			yesCancel: 'Yes, Cancel',
+			cancelled: 'Cancelled',
 			bookingCancelled: 'Your booking has been cancelled',
+			cancelledMessage: 'Your booking has been cancelled successfully',
 			cancelError: 'Failed to cancel booking',
 			rebook: 'Book Again',
 			status: {

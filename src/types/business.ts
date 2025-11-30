@@ -20,6 +20,7 @@ export interface Business {
 	address: string
 	phone: string
 	logoUrl?: string | null
+	coverImageUrl?: string | null
 	description?: string
 	ownerId: string
 	subscriptionStatus: 'active' | 'trial' | 'expired' | 'cancelled'

@@ -3,7 +3,7 @@ import { View, StyleSheet, FlatList, RefreshControl, Alert, Pressable } from 're
 import { Text, SegmentedButtons } from 'react-native-paper'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuth, useBooking, useBusiness, useThemeColors } from '../../src/hooks'
+import { useAuth, useBooking, useBusiness, useThemeColors, useTranslation } from '../../src/hooks'
 import { Card, LoadingScreen } from '../../src/components/ui'
 import { spacing, borderRadius } from '../../src/constants/theme'
 import { Booking, BookingStatus } from '../../src/types'
@@ -11,6 +11,7 @@ import { Booking, BookingStatus } from '../../src/types'
 export default function MyBookingsScreen() {
 	const { user } = useAuth()
 	const { colors, isDarkMode } = useThemeColors()
+	const { t, locale } = useTranslation()
 	const {
 		upcomingBookings,
 		pastBookings,
@@ -47,19 +48,19 @@ export default function MyBookingsScreen() {
 
 	const handleCancelBooking = (bookingId: string) => {
 		Alert.alert(
-			'Cancel Booking',
-			'Are you sure you want to cancel this appointment?',
+			t('customer.myBookings.cancelTitle'),
+			t('customer.myBookings.cancelMessage'),
 			[
-				{ text: 'No', style: 'cancel' },
+				{ text: t('common.no'), style: 'cancel' },
 				{
-					text: 'Yes, Cancel',
+					text: t('customer.myBookings.yesCancel'),
 					style: 'destructive',
 					onPress: async () => {
 						try {
 							await cancelBooking(bookingId)
-							Alert.alert('Cancelled', 'Your booking has been cancelled.')
+							Alert.alert(t('customer.myBookings.cancelled'), t('customer.myBookings.cancelledMessage'))
 						} catch (error) {
-							Alert.alert('Error', 'Failed to cancel booking.')
+							Alert.alert(t('common.error'), t('customer.myBookings.cancelError'))
 						}
 					},
 				},
@@ -68,13 +69,14 @@ export default function MyBookingsScreen() {
 	}
 
 	const formatDateTime = (date: Date) => {
+		const dateLocale = locale === 'es' ? 'es-CO' : 'en-US'
 		return {
-			date: date.toLocaleDateString('en-US', {
+			date: date.toLocaleDateString(dateLocale, {
 				weekday: 'short',
 				month: 'short',
 				day: 'numeric',
 			}),
-			time: date.toLocaleTimeString('en-US', {
+			time: date.toLocaleTimeString(dateLocale, {
 				hour: 'numeric',
 				minute: '2-digit',
 				hour12: true,
@@ -108,14 +110,14 @@ export default function MyBookingsScreen() {
 						]}
 					>
 						<Text style={styles.statusText}>
-							{item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+							{t(`customer.myBookings.status.${item.status}`)}
 						</Text>
 					</View>
 				</View>
 
 				<View style={[styles.bookingDetails, { borderTopColor: colors.border }]}>
 					<Text style={[styles.businessName, { color: colors.textPrimary }]}>
-						{business?.name || 'Loading...'}
+						{business?.name || t('common.loading')}
 					</Text>
 					<View style={styles.detailRow}>
 						<Ionicons
@@ -134,7 +136,7 @@ export default function MyBookingsScreen() {
 							style={styles.cancelButtonContainer}
 						>
 							<Text style={[styles.cancelButton, { color: colors.error }]}>
-								Cancel Booking
+								{t('customer.myBookings.cancelBooking')}
 							</Text>
 						</Pressable>
 					</View>
@@ -146,13 +148,13 @@ export default function MyBookingsScreen() {
 	const currentBookings = tab === 'upcoming' ? upcomingBookings : pastBookings
 
 	if (isLoading && !refreshing && upcomingBookings.length === 0) {
-		return <LoadingScreen message="Loading your bookings..." />
+		return <LoadingScreen message={t('customer.myBookings.loading')} />
 	}
 
 	return (
 		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
 			<View style={styles.header}>
-				<Text style={[styles.title, { color: colors.textPrimary }]}>My Bookings</Text>
+				<Text style={[styles.title, { color: colors.textPrimary }]}>{t('customer.myBookings.title')}</Text>
 			</View>
 
 			<View style={styles.tabsContainer}>
@@ -160,8 +162,8 @@ export default function MyBookingsScreen() {
 					value={tab}
 					onValueChange={setTab}
 					buttons={[
-						{ value: 'upcoming', label: 'Upcoming' },
-						{ value: 'past', label: 'Past' },
+						{ value: 'upcoming', label: t('customer.myBookings.upcoming') },
+						{ value: 'past', label: t('customer.myBookings.past') },
 					]}
 					style={[styles.tabs, { backgroundColor: colors.surface }]}
 					theme={{
@@ -197,12 +199,14 @@ export default function MyBookingsScreen() {
 							/>
 						</View>
 						<Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-							No {tab} bookings
+							{tab === 'upcoming'
+								? t('customer.myBookings.noUpcoming')
+								: t('customer.myBookings.noPast')}
 						</Text>
 						<Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
 							{tab === 'upcoming'
-								? 'Book an appointment to get started'
-								: 'Your past bookings will appear here'}
+								? t('customer.myBookings.bookToStart')
+								: t('customer.myBookings.pastWillAppear')}
 						</Text>
 					</View>
 				}

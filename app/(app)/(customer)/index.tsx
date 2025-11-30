@@ -5,14 +5,16 @@ import {
 	FlatList,
 	RefreshControl,
 	Pressable,
+	Image,
 } from 'react-native'
 import { Text, Searchbar } from 'react-native-paper'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useBusiness, useTranslation, useThemeColors } from '../../../src/hooks'
-import { Card, Avatar, LoadingScreen } from '../../../src/components/ui'
+import { LoadingScreen, HeroImage, Avatar } from '../../../src/components/ui'
 import { spacing, borderRadius } from '../../../src/constants/theme'
+import { HERO_IMAGES, getBusinessCoverImage } from '../../../src/constants/images'
 import { Business } from '../../../src/types'
 
 export default function DiscoverScreen() {
@@ -45,16 +47,37 @@ export default function DiscoverScreen() {
 		router.push(`/(app)/(customer)/business/${business.id}`)
 	}
 
-	const renderBusiness = ({ item }: { item: Business }) => (
-		<Card
-			style={styles.businessCard}
-			onPress={() => handleBusinessPress(item)}
-			variant="elevated"
-		>
-			<View style={styles.businessContent}>
-				<Avatar source={item.logoUrl} name={item.name} size="medium" />
+	const renderBusiness = ({ item, index }: { item: Business; index: number }) => {
+		// Usar la imagen de portada del negocio o una imagen mock basada en el índice
+		const coverImage = item.coverImageUrl || getBusinessCoverImage(index)
+
+		return (
+			<Pressable
+				style={({ pressed }) => [
+					styles.businessCard,
+					{ backgroundColor: colors.surface },
+					pressed && styles.businessCardPressed,
+				]}
+				onPress={() => handleBusinessPress(item)}
+			>
+				{/* Cover Image */}
+				<View style={styles.coverImageContainer}>
+					<Image
+						source={{ uri: coverImage }}
+						style={styles.coverImage}
+						resizeMode="cover"
+					/>
+					{/* Logo overlay */}
+					<View style={[styles.logoOverlay, { backgroundColor: colors.surface }]}>
+						<Avatar source={item.logoUrl} name={item.name} size="small" />
+					</View>
+				</View>
+
+				{/* Business Info */}
 				<View style={styles.businessInfo}>
-					<Text style={[styles.businessName, { color: colors.textPrimary }]}>{item.name}</Text>
+					<Text style={[styles.businessName, { color: colors.textPrimary }]} numberOfLines={1}>
+						{item.name}
+					</Text>
 					<View style={styles.locationRow}>
 						<Ionicons
 							name="location-outline"
@@ -71,16 +94,9 @@ export default function DiscoverScreen() {
 						</Text>
 					)}
 				</View>
-				<View style={[styles.chevronContainer, { backgroundColor: colors.surfaceVariant }]}>
-					<Ionicons
-						name="chevron-forward"
-						size={20}
-						color={colors.textMuted}
-					/>
-				</View>
-			</View>
-		</Card>
-	)
+			</Pressable>
+		)
+	}
 
 	// Only show loading on first load when no businesses exist and no error
 	if (isLoading && businesses.length === 0 && !refreshing && !error) {
@@ -89,23 +105,6 @@ export default function DiscoverScreen() {
 
 	return (
 		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-			<View style={styles.header}>
-				<Text style={[styles.title, { color: colors.textPrimary }]}>{t('customer.home.title')}</Text>
-				<Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('customer.home.subtitle')}</Text>
-			</View>
-
-			<View style={styles.searchContainer}>
-				<Searchbar
-					placeholder={t('customer.home.searchPlaceholder')}
-					onChangeText={setSearchQuery}
-					value={searchQuery}
-					style={[styles.searchbar, { backgroundColor: colors.surface, borderColor: colors.border }]}
-					inputStyle={[styles.searchInput, { color: colors.textPrimary }]}
-					iconColor={colors.textSecondary}
-					placeholderTextColor={colors.textMuted}
-				/>
-			</View>
-
 			<FlatList
 				data={filteredBusinesses}
 				renderItem={renderBusiness}
@@ -118,6 +117,41 @@ export default function DiscoverScreen() {
 						onRefresh={onRefresh}
 						tintColor={colors.primary}
 					/>
+				}
+				ListHeaderComponent={
+					<View>
+						{/* Hero Banner */}
+						<HeroImage
+							source={HERO_IMAGES.customerHome}
+							height={180}
+							overlayOpacity={0.5}
+						>
+							<View style={styles.heroContent}>
+								<Text style={styles.heroTitle}>{t('customer.home.title')}</Text>
+								<Text style={styles.heroSubtitle}>{t('customer.home.subtitle')}</Text>
+							</View>
+						</HeroImage>
+
+						{/* Search Bar */}
+						<View style={styles.searchContainer}>
+							<Searchbar
+								placeholder={t('customer.home.searchPlaceholder')}
+								onChangeText={setSearchQuery}
+								value={searchQuery}
+								style={[styles.searchbar, { backgroundColor: colors.surface, borderColor: colors.border }]}
+								inputStyle={[styles.searchInput, { color: colors.textPrimary }]}
+								iconColor={colors.textSecondary}
+								placeholderTextColor={colors.textMuted}
+							/>
+						</View>
+
+						{/* Section Title */}
+						<View style={styles.sectionHeader}>
+							<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+								{t('customer.home.nearbyBarbers')}
+							</Text>
+						</View>
+					</View>
 				}
 				ListEmptyComponent={
 					<View style={styles.emptyContainer}>
@@ -145,23 +179,27 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 	},
-	header: {
-		paddingHorizontal: spacing.xl,
-		paddingTop: spacing.md,
+	listContent: {
+		paddingBottom: spacing.xxl,
+	},
+	heroContent: {
 		paddingBottom: spacing.sm,
 	},
-	title: {
-		fontSize: 32,
+	heroTitle: {
+		fontSize: 28,
 		fontWeight: '700',
+		color: '#ffffff',
 		letterSpacing: -0.5,
+		marginBottom: spacing.xs,
 	},
-	subtitle: {
-		fontSize: 16,
-		marginTop: spacing.xs,
+	heroSubtitle: {
+		fontSize: 15,
+		color: 'rgba(255, 255, 255, 0.9)',
 	},
 	searchContainer: {
 		paddingHorizontal: spacing.xl,
-		paddingVertical: spacing.md,
+		paddingTop: spacing.lg,
+		paddingBottom: spacing.md,
 	},
 	searchbar: {
 		borderRadius: borderRadius.lg,
@@ -170,23 +208,59 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0,
 	},
 	searchInput: {},
-	listContent: {
+	sectionHeader: {
 		paddingHorizontal: spacing.xl,
-		paddingBottom: spacing.xxl,
+		paddingBottom: spacing.md,
+	},
+	sectionTitle: {
+		fontSize: 20,
+		fontWeight: '600',
 	},
 	businessCard: {
-		marginBottom: spacing.md,
+		marginHorizontal: spacing.xl,
+		marginBottom: spacing.lg,
+		borderRadius: borderRadius.xl,
+		overflow: 'hidden',
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.1,
+		shadowRadius: 8,
+		elevation: 3,
 	},
-	businessContent: {
-		flexDirection: 'row',
+	businessCardPressed: {
+		opacity: 0.9,
+		transform: [{ scale: 0.98 }],
+	},
+	coverImageContainer: {
+		position: 'relative',
+		height: 160,
+		width: '100%',
+	},
+	coverImage: {
+		width: '100%',
+		height: '100%',
+	},
+	logoOverlay: {
+		position: 'absolute',
+		bottom: -20,
+		left: spacing.md,
+		width: 48,
+		height: 48,
+		borderRadius: 24,
+		justifyContent: 'center',
 		alignItems: 'center',
-		gap: spacing.md,
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.15,
+		shadowRadius: 4,
+		elevation: 3,
 	},
 	businessInfo: {
-		flex: 1,
+		padding: spacing.md,
+		paddingTop: spacing.xl + spacing.xs,
 	},
 	businessName: {
-		fontSize: 17,
+		fontSize: 18,
 		fontWeight: '600',
 		marginBottom: spacing.xs,
 	},
@@ -201,15 +275,8 @@ const styles = StyleSheet.create({
 	},
 	businessDescription: {
 		fontSize: 13,
-		marginTop: spacing.xs,
+		marginTop: spacing.sm,
 		lineHeight: 18,
-	},
-	chevronContainer: {
-		width: 32,
-		height: 32,
-		borderRadius: 16,
-		justifyContent: 'center',
-		alignItems: 'center',
 	},
 	emptyContainer: {
 		flex: 1,

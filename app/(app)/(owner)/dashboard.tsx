@@ -3,7 +3,6 @@ import {
 	View,
 	StyleSheet,
 	ScrollView,
-	FlatList,
 	RefreshControl,
 	Pressable,
 } from 'react-native'
@@ -12,8 +11,9 @@ import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth, useBusiness, useBooking, useThemeColors, useTranslation } from '../../../src/hooks'
-import { Card, LoadingScreen } from '../../../src/components/ui'
+import { Card, LoadingScreen, HeroImage } from '../../../src/components/ui'
 import { spacing, borderRadius } from '../../../src/constants/theme'
+import { HERO_IMAGES } from '../../../src/constants/images'
 import { Booking, BookingStatus } from '../../../src/types'
 
 interface QuickAction {
@@ -88,9 +88,6 @@ export default function DashboardScreen() {
 	})
 
 	const pendingBookings = todayBookings.filter((b) => b.status === 'pending')
-	const confirmedBookings = todayBookings.filter(
-		(b) => b.status === 'confirmed' || b.status === 'completed'
-	)
 
 	const handleConfirm = async (bookingId: string) => {
 		await confirmBooking(bookingId)
@@ -176,18 +173,26 @@ export default function DashboardScreen() {
 	if (!currentBusiness) {
 		return (
 			<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-				<View style={styles.setupContainer}>
-					<View style={[styles.setupIconContainer, { backgroundColor: colors.surfaceVariant }]}>
-						<Ionicons
-							name="storefront-outline"
-							size={48}
-							color={colors.textPrimary}
-						/>
+				<HeroImage
+					source={HERO_IMAGES.ownerDashboard}
+					height={280}
+					overlayOpacity={0.5}
+				>
+					<View style={styles.heroSetupContent}>
+						<View style={[styles.setupIconContainer, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+							<Ionicons
+								name="storefront-outline"
+								size={48}
+								color="#ffffff"
+							/>
+						</View>
+						<Text style={styles.heroSetupTitle}>{t('owner.dashboard.setupBusiness')}</Text>
+						<Text style={styles.heroSetupSubtitle}>
+							{t('owner.dashboard.setupDescription')}
+						</Text>
 					</View>
-					<Text style={[styles.setupTitle, { color: colors.textPrimary }]}>{t('owner.dashboard.setupBusiness')}</Text>
-					<Text style={[styles.setupSubtitle, { color: colors.textSecondary }]}>
-						{t('owner.dashboard.setupDescription')}
-					</Text>
+				</HeroImage>
+				<View style={styles.setupButtonContainer}>
 					<Pressable
 						style={[styles.setupButton, { backgroundColor: colors.primary }]}
 						onPress={() => router.push('/(app)/(owner)/settings')}
@@ -199,17 +204,11 @@ export default function DashboardScreen() {
 		)
 	}
 
+	// Obtener imagen de portada del negocio o usar la imagen por defecto
+	const heroImageSource = currentBusiness.coverImageUrl || HERO_IMAGES.ownerDashboard
+
 	return (
 		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-			<View style={[styles.header, { borderBottomColor: colors.border }]}>
-				<View>
-					<Text style={[styles.greeting, { color: colors.textSecondary }]}>
-						{t('owner.dashboard.welcome')}, {user?.name?.split(' ')[0]}!
-					</Text>
-					<Text style={[styles.businessName, { color: colors.textPrimary }]}>{currentBusiness.name}</Text>
-				</View>
-			</View>
-
 			<ScrollView
 				style={styles.scrollView}
 				contentContainerStyle={styles.scrollContent}
@@ -222,17 +221,40 @@ export default function DashboardScreen() {
 					/>
 				}
 			>
+				{/* Hero Banner */}
+				<HeroImage
+					source={heroImageSource}
+					height={200}
+					overlayOpacity={0.45}
+				>
+					<View style={styles.heroContent}>
+						<Text style={styles.heroGreeting}>
+							{t('owner.dashboard.welcome')}, {user?.name?.split(' ')[0]}!
+						</Text>
+						<Text style={styles.heroBusinessName}>{currentBusiness.name}</Text>
+					</View>
+				</HeroImage>
+
 				{/* Stats Cards */}
 				<View style={styles.statsRow}>
 					<View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+						<View style={[styles.statIconContainer, { backgroundColor: colors.primary + '20' }]}>
+							<Ionicons name="calendar" size={20} color={colors.primary} />
+						</View>
 						<Text style={[styles.statNumber, { color: colors.textPrimary }]}>{todayBookings.length}</Text>
 						<Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('owner.dashboard.todayAppointments')}</Text>
 					</View>
 					<View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+						<View style={[styles.statIconContainer, { backgroundColor: colors.warning + '20' }]}>
+							<Ionicons name="hourglass" size={20} color={colors.warning} />
+						</View>
 						<Text style={[styles.statNumber, { color: colors.textPrimary }]}>{pendingBookings.length}</Text>
 						<Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('customer.myBookings.status.pending')}</Text>
 					</View>
 					<View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+						<View style={[styles.statIconContainer, { backgroundColor: colors.success + '20' }]}>
+							<Ionicons name="cut" size={20} color={colors.success} />
+						</View>
 						<Text style={[styles.statNumber, { color: colors.textPrimary }]}>{services.length}</Text>
 						<Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('owner.services.title')}</Text>
 					</View>
@@ -296,32 +318,55 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 	},
-	header: {
-		paddingHorizontal: spacing.xl,
-		paddingTop: spacing.md,
-		paddingBottom: spacing.lg,
-		borderBottomWidth: 1,
-	},
-	greeting: {
-		fontSize: 15,
-		fontWeight: '500',
-	},
-	businessName: {
-		fontSize: 24,
-		fontWeight: '700',
-		marginTop: spacing.xs,
-		letterSpacing: -0.5,
-	},
 	scrollView: {
 		flex: 1,
 	},
 	scrollContent: {
-		padding: spacing.xl,
 		paddingBottom: spacing.xxl,
+	},
+	heroContent: {
+		paddingBottom: spacing.md,
+	},
+	heroGreeting: {
+		fontSize: 16,
+		fontWeight: '500',
+		color: 'rgba(255, 255, 255, 0.9)',
+		marginBottom: spacing.xs,
+	},
+	heroBusinessName: {
+		fontSize: 28,
+		fontWeight: '700',
+		color: '#ffffff',
+		letterSpacing: -0.5,
+	},
+	heroSetupContent: {
+		alignItems: 'center',
+		paddingBottom: spacing.lg,
+	},
+	heroSetupTitle: {
+		fontSize: 24,
+		fontWeight: '700',
+		color: '#ffffff',
+		marginTop: spacing.md,
+		textAlign: 'center',
+	},
+	heroSetupSubtitle: {
+		fontSize: 15,
+		color: 'rgba(255, 255, 255, 0.85)',
+		marginTop: spacing.sm,
+		textAlign: 'center',
+		paddingHorizontal: spacing.xl,
+		lineHeight: 22,
+	},
+	setupButtonContainer: {
+		padding: spacing.xl,
+		paddingTop: spacing.lg,
 	},
 	statsRow: {
 		flexDirection: 'row',
 		gap: spacing.sm,
+		paddingHorizontal: spacing.xl,
+		marginTop: spacing.lg,
 		marginBottom: spacing.xl,
 	},
 	statCard: {
@@ -331,12 +376,20 @@ const styles = StyleSheet.create({
 		borderRadius: borderRadius.xl,
 		borderWidth: 1,
 	},
+	statIconContainer: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginBottom: spacing.sm,
+	},
 	statNumber: {
-		fontSize: 28,
+		fontSize: 24,
 		fontWeight: '700',
 	},
 	statLabel: {
-		fontSize: 11,
+		fontSize: 10,
 		marginTop: spacing.xs,
 		textAlign: 'center',
 		fontWeight: '500',
@@ -344,6 +397,7 @@ const styles = StyleSheet.create({
 		letterSpacing: 0.3,
 	},
 	section: {
+		paddingHorizontal: spacing.xl,
 		marginBottom: spacing.xl,
 	},
 	sectionTitle: {
@@ -452,36 +506,18 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		fontWeight: '500',
 	},
-	setupContainer: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		padding: spacing.xl,
-	},
 	setupIconContainer: {
 		width: 96,
 		height: 96,
 		borderRadius: 48,
 		justifyContent: 'center',
 		alignItems: 'center',
-		marginBottom: spacing.lg,
-	},
-	setupTitle: {
-		fontSize: 24,
-		fontWeight: '700',
-		marginTop: spacing.sm,
-	},
-	setupSubtitle: {
-		fontSize: 15,
-		marginTop: spacing.sm,
-		textAlign: 'center',
-		lineHeight: 22,
 	},
 	setupButton: {
-		marginTop: spacing.xl,
 		paddingHorizontal: spacing.xl,
 		paddingVertical: spacing.md,
 		borderRadius: borderRadius.lg,
+		alignItems: 'center',
 	},
 	setupButtonText: {
 		fontSize: 16,

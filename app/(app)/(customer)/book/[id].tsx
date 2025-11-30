@@ -8,19 +8,20 @@ import { useBusiness, useBooking, useAuth, useThemeColors, useTranslation } from
 import { Button, Card, LoadingScreen } from '../../../../src/components/ui'
 import { spacing, borderRadius } from '../../../../src/constants/theme'
 
-// Generate next 14 days
-function getNextDays(count: number) {
+// Generate next 14 days with locale support
+function getNextDays(count: number, locale: string) {
 	const days = []
 	const today = new Date()
+	const dateLocale = locale === 'es' ? 'es-CO' : 'en-US'
 
 	for (let i = 0; i < count; i++) {
 		const date = new Date(today)
 		date.setDate(date.getDate() + i)
 		days.push({
 			date: date.toISOString().split('T')[0],
-			dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+			dayName: date.toLocaleDateString(dateLocale, { weekday: 'short' }),
 			dayNumber: date.getDate(),
-			month: date.toLocaleDateString('en-US', { month: 'short' }),
+			month: date.toLocaleDateString(dateLocale, { month: 'short' }),
 			fullDate: date,
 		})
 	}
@@ -48,7 +49,7 @@ export default function BookingScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>()
 	const { user } = useAuth()
 	const { colors, isDarkMode } = useThemeColors()
-	const { t } = useTranslation()
+	const { t, locale } = useTranslation()
 	const { currentBusiness, services, barbers } = useBusiness()
 	const {
 		selectedServiceId,
@@ -65,7 +66,7 @@ export default function BookingScreen() {
 
 	const [isBooking, setIsBooking] = useState(false)
 
-	const days = useMemo(() => getNextDays(14), [])
+	const days = useMemo(() => getNextDays(14, locale), [locale])
 
 	const selectedService = services.find((s) => s.id === selectedServiceId)
 	const selectedBarber = barbers.find((b) => b.id === selectedBarberId)

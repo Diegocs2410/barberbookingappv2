@@ -24,6 +24,10 @@ export default {
 		name: 'Nombre',
 		phone: 'Teléfono',
 		address: 'Dirección',
+		yes: 'Sí',
+		no: 'No',
+		ok: 'OK',
+		cancelled: 'Cancelado',
 	},
 	auth: {
 		login: {
@@ -85,6 +89,7 @@ export default {
 			title: 'Encuentra tu Barbería',
 			subtitle: 'Reserva tu próxima cita',
 			searchPlaceholder: 'Buscar barberías...',
+			nearbyBarbers: 'Barberías Cerca de Ti',
 			noBusinesses: 'No hay barberías disponibles',
 			businessesWillAppear: 'Las barberías aparecerán aquí',
 			viewDetails: 'Ver Detalles',
@@ -129,6 +134,7 @@ export default {
 		},
 		myBookings: {
 			title: 'Mis Reservas',
+			loading: 'Cargando tus reservas...',
 			upcoming: 'Próximas',
 			past: 'Pasadas',
 			cancelled: 'Canceladas',
@@ -138,9 +144,13 @@ export default {
 			bookToStart: 'Reserva una cita para comenzar',
 			pastWillAppear: 'Tus reservas pasadas aparecerán aquí',
 			cancelBooking: 'Cancelar Reserva',
+			cancelTitle: 'Cancelar Reserva',
+			cancelMessage: '¿Estás seguro de que quieres cancelar esta cita?',
 			cancelConfirm: '¿Estás seguro de que quieres cancelar esta cita?',
 			yesCancel: 'Sí, Cancelar',
+			cancelled: 'Cancelada',
 			bookingCancelled: 'Tu reserva ha sido cancelada',
+			cancelledMessage: 'Tu reserva ha sido cancelada exitosamente',
 			cancelError: 'Error al cancelar la reserva',
 			rebook: 'Reservar de Nuevo',
 			status: {
