@@ -12,26 +12,30 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useAuth } from '../../src/hooks'
+import { useAuth, useTranslation } from '../../src/hooks'
 import { Button, Input } from '../../src/components/ui'
 import { colors, spacing } from '../../src/constants/theme'
 
-const registerSchema = z
-	.object({
-		name: z.string().min(2, 'Name must be at least 2 characters'),
-		email: z.string().email('Please enter a valid email'),
-		password: z.string().min(6, 'Password must be at least 6 characters'),
-		confirmPassword: z.string(),
-	})
-	.refine((data) => data.password === data.confirmPassword, {
-		message: "Passwords don't match",
-		path: ['confirmPassword'],
-	})
+const createRegisterSchema = (t: (key: string) => string) =>
+	z
+		.object({
+			name: z.string().min(2, t('auth.register.errors.nameRequired')),
+			email: z.string().email(t('auth.register.errors.invalidEmail')),
+			password: z.string().min(6, t('auth.register.errors.passwordTooShort')),
+			confirmPassword: z.string(),
+		})
+		.refine((data) => data.password === data.confirmPassword, {
+			message: t('auth.register.errors.passwordMismatch'),
+			path: ['confirmPassword'],
+		})
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export default function RegisterScreen() {
 	const { signUp, isLoading, error } = useAuth()
+	const { t } = useTranslation()
+
+	const registerSchema = createRegisterSchema(t)
 
 	const {
 		control,
@@ -66,97 +70,97 @@ export default function RegisterScreen() {
 					contentContainerStyle={styles.scrollContent}
 					keyboardShouldPersistTaps="handled"
 				>
-					<View style={styles.header}>
-						<Text style={styles.logo}>✂️</Text>
-						<Text style={styles.title}>Create Account</Text>
-						<Text style={styles.subtitle}>Join BarberBooking today</Text>
+				<View style={styles.header}>
+					<Text style={styles.logo}>✂️</Text>
+					<Text style={styles.title}>{t('auth.register.title')}</Text>
+					<Text style={styles.subtitle}>{t('auth.register.subtitle')}</Text>
+				</View>
+
+				<View style={styles.form}>
+				<Controller
+					control={control}
+					name="name"
+					render={({ field: { onChange, value } }) => (
+						<Input
+							label={t('common.name')}
+							value={value}
+							onChangeText={onChange}
+							placeholder={t('auth.register.namePlaceholder')}
+							autoCapitalize="words"
+							error={errors.name?.message ?? ''}
+						/>
+					)}
+				/>
+
+				<Controller
+					control={control}
+					name="email"
+					render={({ field: { onChange, value } }) => (
+						<Input
+							label={t('common.email')}
+							value={value}
+							onChangeText={onChange}
+							placeholder={t('auth.register.emailPlaceholder')}
+							keyboardType="email-address"
+							autoCapitalize="none"
+							error={errors.email?.message ?? ''}
+						/>
+					)}
+				/>
+
+				<Controller
+					control={control}
+					name="password"
+					render={({ field: { onChange, value } }) => (
+						<Input
+							label={t('common.password')}
+							value={value}
+							onChangeText={onChange}
+							placeholder={t('auth.register.passwordPlaceholder')}
+							secureTextEntry
+							textContentType="oneTimeCode"
+							autoComplete="off"
+							error={errors.password?.message ?? ''}
+						/>
+					)}
+				/>
+
+				<Controller
+					control={control}
+					name="confirmPassword"
+					render={({ field: { onChange, value } }) => (
+						<Input
+							label={t('auth.register.confirmPasswordPlaceholder')}
+							value={value}
+							onChangeText={onChange}
+							placeholder={t('auth.register.confirmPasswordPlaceholder')}
+							secureTextEntry
+							textContentType="oneTimeCode"
+							autoComplete="off"
+							error={errors.confirmPassword?.message ?? ''}
+						/>
+					)}
+				/>
+
+					{error && <Text style={styles.error}>{error}</Text>}
+
+					<View style={styles.buttonContainer}>
+						<Button
+							onPress={handleSubmit(onSubmit)}
+							loading={isLoading}
+							disabled={isLoading}
+						>
+							{t('auth.register.registerButton')}
+						</Button>
 					</View>
 
-					<View style={styles.form}>
-					<Controller
-						control={control}
-						name="name"
-						render={({ field: { onChange, value } }) => (
-							<Input
-								label="Full Name"
-								value={value}
-								onChangeText={onChange}
-								placeholder="John Doe"
-								autoCapitalize="words"
-								error={errors.name?.message ?? ''}
-							/>
-						)}
-					/>
-
-					<Controller
-						control={control}
-						name="email"
-						render={({ field: { onChange, value } }) => (
-							<Input
-								label="Email"
-								value={value}
-								onChangeText={onChange}
-								placeholder="your@email.com"
-								keyboardType="email-address"
-								autoCapitalize="none"
-								error={errors.email?.message ?? ''}
-							/>
-						)}
-					/>
-
-					<Controller
-						control={control}
-						name="password"
-						render={({ field: { onChange, value } }) => (
-							<Input
-								label="Password"
-								value={value}
-								onChangeText={onChange}
-								placeholder="Create a password"
-								secureTextEntry
-								textContentType="oneTimeCode"
-								autoComplete="off"
-								error={errors.password?.message ?? ''}
-							/>
-						)}
-					/>
-
-					<Controller
-						control={control}
-						name="confirmPassword"
-						render={({ field: { onChange, value } }) => (
-							<Input
-								label="Confirm Password"
-								value={value}
-								onChangeText={onChange}
-								placeholder="Confirm your password"
-								secureTextEntry
-								textContentType="oneTimeCode"
-								autoComplete="off"
-								error={errors.confirmPassword?.message ?? ''}
-							/>
-						)}
-					/>
-
-						{error && <Text style={styles.error}>{error}</Text>}
-
-						<View style={styles.buttonContainer}>
-							<Button
-								onPress={handleSubmit(onSubmit)}
-								loading={isLoading}
-								disabled={isLoading}
-							>
-								Create Account
-							</Button>
-						</View>
-
-						<View style={styles.footer}>
-							<Text style={styles.footerText}>Already have an account?</Text>
-							<Link href="/(auth)/login" asChild>
-								<Text style={styles.link}>Sign In</Text>
-							</Link>
-						</View>
+					<View style={styles.footer}>
+						<Text style={styles.footerText}>{t('auth.register.haveAccount')}</Text>
+						<Link href="/(auth)/login" asChild>
+							<Text style={styles.link}>{t('auth.register.login')}</Text>
+						</Link>
 					</View>
+				</View>
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</SafeAreaView>

@@ -12,20 +12,24 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useAuth } from '../../src/hooks'
+import { useAuth, useTranslation } from '../../src/hooks'
 import { Button, Input } from '../../src/components/ui'
 import { colors, spacing } from '../../src/constants/theme'
 
-const loginSchema = z.object({
-	email: z.string().email('Please enter a valid email'),
-	password: z.string().min(6, 'Password must be at least 6 characters'),
-})
+const createLoginSchema = (t: (key: string) => string) =>
+	z.object({
+		email: z.string().email(t('auth.login.errors.invalidEmail')),
+		password: z.string().min(6, t('auth.login.errors.invalidPassword')),
+	})
 
 type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginScreen() {
 	const { signIn, isLoading, error } = useAuth()
+	const { t } = useTranslation()
 	const [showPassword, setShowPassword] = useState(false)
+
+	const loginSchema = createLoginSchema(t)
 
 	const {
 		control,
@@ -59,65 +63,65 @@ export default function LoginScreen() {
 					contentContainerStyle={styles.scrollContent}
 					keyboardShouldPersistTaps="handled"
 				>
-					<View style={styles.header}>
-						<Text style={styles.logo}>✂️</Text>
-						<Text style={styles.title}>BarberBooking</Text>
-						<Text style={styles.subtitle}>Sign in to your account</Text>
+				<View style={styles.header}>
+					<Text style={styles.logo}>✂️</Text>
+					<Text style={styles.title}>BarberBooking</Text>
+					<Text style={styles.subtitle}>{t('auth.login.subtitle')}</Text>
+				</View>
+
+				<View style={styles.form}>
+				<Controller
+					control={control}
+					name="email"
+					render={({ field: { onChange, value } }) => (
+						<Input
+							label={t('common.email')}
+							value={value}
+							onChangeText={onChange}
+							placeholder={t('auth.login.emailPlaceholder')}
+							keyboardType="email-address"
+							autoCapitalize="none"
+							error={errors.email?.message ?? ''}
+						/>
+					)}
+				/>
+
+				<Controller
+					control={control}
+					name="password"
+					render={({ field: { onChange, value } }) => (
+						<Input
+							label={t('common.password')}
+							value={value}
+							onChangeText={onChange}
+							placeholder={t('auth.login.passwordPlaceholder')}
+							secureTextEntry={!showPassword}
+							textContentType="oneTimeCode"
+							autoComplete="off"
+							error={errors.password?.message ?? ''}
+						/>
+					)}
+				/>
+
+					{error && <Text style={styles.error}>{error}</Text>}
+
+					<View style={styles.buttonContainer}>
+						<Button
+							onPress={handleSubmit(onSubmit)}
+							loading={isLoading}
+							disabled={isLoading}
+						>
+							{t('auth.login.loginButton')}
+						</Button>
 					</View>
 
-					<View style={styles.form}>
-					<Controller
-						control={control}
-						name="email"
-						render={({ field: { onChange, value } }) => (
-							<Input
-								label="Email"
-								value={value}
-								onChangeText={onChange}
-								placeholder="your@email.com"
-								keyboardType="email-address"
-								autoCapitalize="none"
-								error={errors.email?.message ?? ''}
-							/>
-						)}
-					/>
-
-					<Controller
-						control={control}
-						name="password"
-						render={({ field: { onChange, value } }) => (
-							<Input
-								label="Password"
-								value={value}
-								onChangeText={onChange}
-								placeholder="Enter your password"
-								secureTextEntry={!showPassword}
-								textContentType="oneTimeCode"
-								autoComplete="off"
-								error={errors.password?.message ?? ''}
-							/>
-						)}
-					/>
-
-						{error && <Text style={styles.error}>{error}</Text>}
-
-						<View style={styles.buttonContainer}>
-							<Button
-								onPress={handleSubmit(onSubmit)}
-								loading={isLoading}
-								disabled={isLoading}
-							>
-								Sign In
-							</Button>
-						</View>
-
-						<View style={styles.footer}>
-							<Text style={styles.footerText}>Don't have an account?</Text>
-							<Link href="/(auth)/register" asChild>
-								<Text style={styles.link}>Sign Up</Text>
-							</Link>
-						</View>
+					<View style={styles.footer}>
+						<Text style={styles.footerText}>{t('auth.login.noAccount')}</Text>
+						<Link href="/(auth)/register" asChild>
+							<Text style={styles.link}>{t('auth.login.signUp')}</Text>
+						</Link>
 					</View>
+				</View>
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</SafeAreaView>

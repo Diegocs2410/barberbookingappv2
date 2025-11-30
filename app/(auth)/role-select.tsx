@@ -4,35 +4,36 @@ import { Text } from 'react-native-paper'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuth } from '../../src/hooks'
+import { useAuth, useTranslation } from '../../src/hooks'
 import { Button, Card } from '../../src/components/ui'
 import { colors, spacing, borderRadius } from '../../src/constants/theme'
 import { UserRole } from '../../src/types'
 
 interface RoleOption {
 	role: UserRole
-	title: string
-	description: string
+	titleKey: string
+	descriptionKey: string
 	icon: keyof typeof Ionicons.glyphMap
 }
 
 const ROLE_OPTIONS: RoleOption[] = [
 	{
 		role: 'customer',
-		title: 'Customer',
-		description: 'Book appointments at barbershops',
+		titleKey: 'auth.roleSelect.customer',
+		descriptionKey: 'auth.roleSelect.customerDescription',
 		icon: 'person-outline',
 	},
 	{
 		role: 'owner',
-		title: 'Business Owner',
-		description: 'Manage your barbershop business',
+		titleKey: 'auth.roleSelect.owner',
+		descriptionKey: 'auth.roleSelect.ownerDescription',
 		icon: 'business-outline',
 	},
 ]
 
 export default function RoleSelectScreen() {
 	const { updateRole, isLoading, user } = useAuth()
+	const { t } = useTranslation()
 	const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
 
 	const handleContinue = async () => {
@@ -50,8 +51,10 @@ export default function RoleSelectScreen() {
 		<SafeAreaView style={styles.container}>
 			<View style={styles.content}>
 				<View style={styles.header}>
-					<Text style={styles.title}>Welcome, {user?.name?.split(' ')[0]}!</Text>
-					<Text style={styles.subtitle}>How will you use BarberBooking?</Text>
+					<Text style={styles.title}>
+						{t('auth.roleSelect.title')}, {user?.name?.split(' ')[0]}!
+					</Text>
+					<Text style={styles.subtitle}>{t('auth.roleSelect.subtitle')}</Text>
 				</View>
 
 				<View style={styles.options}>
@@ -85,9 +88,9 @@ export default function RoleSelectScreen() {
 										/>
 									</View>
 									<View style={styles.optionText}>
-										<Text style={styles.optionTitle}>{option.title}</Text>
+										<Text style={styles.optionTitle}>{t(option.titleKey)}</Text>
 										<Text style={styles.optionDescription}>
-											{option.description}
+											{t(option.descriptionKey)}
 										</Text>
 									</View>
 									<View style={styles.radioContainer}>
@@ -114,7 +117,7 @@ export default function RoleSelectScreen() {
 						loading={isLoading}
 						disabled={!selectedRole || isLoading}
 					>
-						Continue
+						{t('auth.roleSelect.continueButton')}
 					</Button>
 				</View>
 			</View>

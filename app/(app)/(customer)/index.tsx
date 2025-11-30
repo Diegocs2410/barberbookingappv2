@@ -10,13 +10,14 @@ import { Text, Searchbar } from 'react-native-paper'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useBusiness } from '../../../src/hooks'
+import { useBusiness, useTranslation } from '../../../src/hooks'
 import { Card, Avatar, LoadingScreen } from '../../../src/components/ui'
 import { colors, spacing, borderRadius } from '../../../src/constants/theme'
 import { Business } from '../../../src/types'
 
 export default function DiscoverScreen() {
 	const { businesses, isLoading, error, loadAllBusinesses } = useBusiness()
+	const { t } = useTranslation()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [refreshing, setRefreshing] = useState(false)
 
@@ -80,19 +81,19 @@ export default function DiscoverScreen() {
 
 	// Only show loading on first load when no businesses exist and no error
 	if (isLoading && businesses.length === 0 && !refreshing && !error) {
-		return <LoadingScreen message="Finding barbershops..." />
+		return <LoadingScreen message={t('common.loading')} />
 	}
 
 	return (
 		<SafeAreaView style={styles.container} edges={['top']}>
 			<View style={styles.header}>
-				<Text style={styles.title}>Discover</Text>
-				<Text style={styles.subtitle}>Find your perfect barber</Text>
+				<Text style={styles.title}>{t('customer.home.title')}</Text>
+				<Text style={styles.subtitle}>{t('customer.home.subtitle')}</Text>
 			</View>
 
 			<View style={styles.searchContainer}>
 				<Searchbar
-					placeholder="Search barbershops..."
+					placeholder={t('customer.home.searchPlaceholder')}
 					onChangeText={setSearchQuery}
 					value={searchQuery}
 					style={styles.searchbar}
@@ -122,10 +123,10 @@ export default function DiscoverScreen() {
 							size={64}
 							color={colors.textMuted}
 						/>
-						<Text style={styles.emptyTitle}>No barbershops found</Text>
+						<Text style={styles.emptyTitle}>{t('customer.home.noBusinesses')}</Text>
 						<Text style={styles.emptySubtitle}>
 							{searchQuery
-								? 'Try a different search term'
+								? t('common.noResults')
 								: 'Barbershops will appear here'}
 						</Text>
 					</View>

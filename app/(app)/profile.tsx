@@ -4,12 +4,14 @@ import { Text, Divider } from 'react-native-paper'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuth } from '../../src/hooks'
+import { useAuth, useTranslation } from '../../src/hooks'
 import { Button, Card, Avatar, Input } from '../../src/components/ui'
+import { LanguageSelector } from '../../src/components/language-selector'
 import { colors, spacing, borderRadius } from '../../src/constants/theme'
 
 export default function ProfileScreen() {
 	const { user, signOut, updateProfile, isLoading } = useAuth()
+	const { t } = useTranslation()
 	const [isEditing, setIsEditing] = useState(false)
 	const [name, setName] = useState(user?.name || '')
 	const [phone, setPhone] = useState(user?.phone || '')
@@ -18,17 +20,17 @@ export default function ProfileScreen() {
 		try {
 			await updateProfile({ name, phone })
 			setIsEditing(false)
-			Alert.alert('Success', 'Profile updated successfully!')
+			Alert.alert(t('common.success'), t('profile.updateSuccess'))
 		} catch (error) {
-			Alert.alert('Error', 'Failed to update profile')
+			Alert.alert(t('common.error'), t('profile.updateError'))
 		}
 	}
 
 	const handleSignOut = () => {
-		Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-			{ text: 'Cancel', style: 'cancel' },
+		Alert.alert(t('auth.logout'), 'Are you sure you want to sign out?', [
+			{ text: t('common.cancel'), style: 'cancel' },
 			{
-				text: 'Sign Out',
+				text: t('auth.logout'),
 				style: 'destructive',
 				onPress: async () => {
 					await signOut()
@@ -41,18 +43,18 @@ export default function ProfileScreen() {
 	const getRoleName = (role: string) => {
 		switch (role) {
 			case 'owner':
-				return 'Business Owner'
+				return t('auth.roleSelect.owner')
 			case 'barber':
 				return 'Barber'
 			default:
-				return 'Customer'
+				return t('auth.roleSelect.customer')
 		}
 	}
 
 	return (
 		<SafeAreaView style={styles.container} edges={['top']}>
 			<View style={styles.header}>
-				<Text style={styles.title}>Profile</Text>
+				<Text style={styles.title}>{t('profile.title')}</Text>
 			</View>
 
 			<ScrollView
@@ -84,17 +86,17 @@ export default function ProfileScreen() {
 					{isEditing ? (
 						<View style={styles.editForm}>
 							<Input
-								label="Full Name"
+								label={t('common.name')}
 								value={name}
 								onChangeText={setName}
-								placeholder="Your name"
+								placeholder={t('common.name')}
 								autoCapitalize="words"
 							/>
 							<Input
-								label="Phone"
+								label={t('common.phone')}
 								value={phone}
 								onChangeText={setPhone}
-								placeholder="Your phone number"
+								placeholder={t('common.phone')}
 								keyboardType="phone-pad"
 							/>
 							<View style={styles.editButtons}>
@@ -107,14 +109,14 @@ export default function ProfileScreen() {
 									}}
 									style={styles.cancelButton}
 								>
-									Cancel
+									{t('common.cancel')}
 								</Button>
 								<Button
 									onPress={handleSaveProfile}
 									loading={isLoading}
 									style={styles.saveButton}
 								>
-									Save
+									{t('common.save')}
 								</Button>
 							</View>
 						</View>
@@ -125,7 +127,7 @@ export default function ProfileScreen() {
 							icon="pencil"
 							style={styles.editButton}
 						>
-							Edit Profile
+							{t('profile.editProfile')}
 						</Button>
 					)}
 				</Card>
@@ -141,7 +143,7 @@ export default function ProfileScreen() {
 							/>
 						</View>
 						<View style={styles.infoContent}>
-							<Text style={styles.infoLabel}>Email</Text>
+							<Text style={styles.infoLabel}>{t('common.email')}</Text>
 							<Text style={styles.infoValue}>{user?.email}</Text>
 						</View>
 					</View>
@@ -157,7 +159,7 @@ export default function ProfileScreen() {
 							/>
 						</View>
 						<View style={styles.infoContent}>
-							<Text style={styles.infoLabel}>Phone</Text>
+							<Text style={styles.infoLabel}>{t('common.phone')}</Text>
 							<Text style={styles.infoValue}>
 								{user?.phone || 'Not set'}
 							</Text>
@@ -183,13 +185,18 @@ export default function ProfileScreen() {
 					</View>
 				</Card>
 
+				{/* Language Selector */}
+				<Card style={styles.languageCard}>
+					<LanguageSelector />
+				</Card>
+
 				{/* Sign Out Button */}
 				<Button
 					mode="outlined"
 					onPress={handleSignOut}
 					style={styles.signOutButton}
 				>
-					Sign Out
+					{t('auth.logout')}
 				</Button>
 
 				{/* App Version */}
@@ -269,6 +276,9 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	infoCard: {
+		marginBottom: spacing.lg,
+	},
+	languageCard: {
 		marginBottom: spacing.lg,
 	},
 	infoRow: {
