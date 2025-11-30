@@ -1,0 +1,1239 @@
+# Reglas de Cursor para BarberBooking App
+
+## Contexto del Proyecto
+Eres un desarrollador experto trabajando en BarberBooking, una aplicación móvil multiplataforma (React Native/Expo) para reservas de barberías en Colombia. La aplicación está completamente traducida al español (predeterminado) e inglés.
+
+## Stack Tecnológico Principal
+- React 19.1 (con características nuevas!)
+- React Native 0.81 con Expo 54
+- TypeScript 5.9 (strict mode)
+- Expo Router (navegación basada en archivos)
+- Redux Toolkit para estado global
+- Firebase (Auth, Firestore)
+- React Native Paper para UI
+- i18n-js para internacionalización (ES/EN)
+- React Hook Form + Zod para formularios
+
+## Filosofía de Desarrollo
+
+### Principios Fundamentales
+1. **Type Safety First**: Todo debe estar tipado, evitar `any`
+2. **Componentes Funcionales**: Solo hooks, sin class components
+3. **Código Limpio**: Legible, mantenible, auto-documentado
+4. **Mobile First**: Optimizar para dispositivos móviles
+5. **i18n Siempre**: Todo texto visible debe usar traducciones
+6. **Accesibilidad**: Considerar a11y en todos los componentes
+
+### Idioma del Código
+- **Comentarios y documentación**: Español
+- **Nombres de variables/funciones**: Inglés (convención estándar)
+- **Commits**: Español
+- **UI/Textos**: Usar sistema i18n (español/inglés)
+
+## Convenciones de Nombres
+
+### Archivos y Carpetas
+```typescript
+// ✅ CORRECTO
+components/
+  user-profile.tsx          // kebab-case para archivos
+  language-selector.tsx
+hooks/
+  use-auth.ts              // kebab-case con prefijo 'use-'
+  use-translation.ts
+services/
+  auth-service.ts          // kebab-case con sufijo '-service'
+
+// ❌ INCORRECTO
+components/
+  UserProfile.tsx          // No PascalCase para archivos
+  languageSelector.tsx     // No camelCase
+```
+
+### Componentes y Tipos
+```typescript
+// ✅ CORRECTO
+export function UserProfile() {}          // PascalCase para componentes
+interface UserProfileProps {}             // PascalCase para interfaces
+type UserRole = 'customer' | 'owner'     // PascalCase para types
+
+// ❌ INCORRECTO
+export function userProfile() {}          // No camelCase
+interface userProfileProps {}            // No camelCase
+```
+
+### Variables y Funciones
+```typescript
+// ✅ CORRECTO
+const userName = 'Diego'                 // camelCase para variables
+const isLoading = false                  // prefijo 'is' para booleanos
+const hasError = true                    // prefijo 'has' para booleanos
+const canSubmit = false                  // prefijo 'can' para booleanos
+const handleSubmit = () => {}            // prefijo 'handle' para eventos
+const fetchUserData = async () => {}     // verbos descriptivos
+
+// ❌ INCORRECTO
+const UserName = 'Diego'                 // No PascalCase
+const loading = false                    // Poco descriptivo
+const submit = () => {}                  // Falta 'handle'
+```
+
+### Constantes
+```typescript
+// ✅ CORRECTO
+const API_BASE_URL = 'https://api.example.com'
+const MAX_RETRIES = 3
+const DEFAULT_LOCALE = 'es'
+
+// ❌ INCORRECTO
+const apiBaseUrl = 'https://api.example.com'
+const maxRetries = 3
+```
+
+## Estructura de Componentes
+
+### Template Obligatorio
+```typescript
+import React from 'react'
+import { View, StyleSheet } from 'react-native'
+import { Text } from 'react-native-paper'
+import { useTranslation } from '../hooks'
+import { colors, spacing } from '../constants/theme'
+
+/**
+ * Descripción del componente en español
+ * @param props - Descripción de las props
+ */
+interface Props {
+	title: string
+	onPress: () => void
+	isLoading?: boolean
+}
+
+export function MyComponent({ title, onPress, isLoading = false }: Props) {
+	const { t } = useTranslation()
+
+	return (
+		<View style={styles.container}>
+			<Text>{t('mi.clave.traduccion')}</Text>
+		</View>
+	)
+}
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		padding: spacing.md,
+		backgroundColor: colors.background,
+	},
+})
+```
+
+### Reglas para Componentes
+1. **Siempre definir interface para Props** (aunque esté vacía)
+2. **Exportar con `export function`**, no `export default`
+3. **Usar StyleSheet.create** para estilos
+4. **Destructurar props** en parámetros
+5. **Valores por defecto** en destructuración
+6. **JSDoc en español** para documentar
+7. **useTranslation** para todo texto visible
+
+## Hooks Personalizados
+
+### Template
+```typescript
+import { useState, useEffect, useCallback } from 'react'
+
+/**
+ * Hook personalizado para gestionar [descripción]
+ * @returns Objeto con estado y funciones
+ */
+export function useMyHook() {
+	const [data, setData] = useState<MyType | null>(null)
+	const [isLoading, setIsLoading] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+
+	const fetchData = useCallback(async () => {
+		setIsLoading(true)
+		setError(null)
+		try {
+			// Lógica aquí
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Error desconocido')
+		} finally {
+			setIsLoading(false)
+		}
+	}, [])
+
+	return {
+		data,
+		isLoading,
+		error,
+		fetchData,
+	}
+}
+```
+
+### Reglas para Hooks
+1. **Prefijo obligatorio**: `use` + nombre descriptivo
+2. **Retornar objeto**, no array (excepto useState)
+3. **Incluir estados de loading y error**
+4. **useCallback** para funciones que se pasan como props
+5. **useMemo** para cálculos costosos
+6. **Documentar con JSDoc** en español
+
+## Redux Toolkit
+
+### Slice Template
+```typescript
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+
+interface MyState {
+	items: Item[]
+	currentItem: Item | null
+	isLoading: boolean
+	error: string | null
+}
+
+const initialState: MyState = {
+	items: [],
+	currentItem: null,
+	isLoading: false,
+	error: null,
+}
+
+const mySlice = createSlice({
+	name: 'myFeature',
+	initialState,
+	reducers: {
+		// Acción síncrona
+		setItems: (state, action: PayloadAction<Item[]>) => {
+			state.items = action.payload
+		},
+		// Acción con loading
+		fetchItemsStart: (state) => {
+			state.isLoading = true
+			state.error = null
+		},
+		fetchItemsSuccess: (state, action: PayloadAction<Item[]>) => {
+			state.items = action.payload
+			state.isLoading = false
+		},
+		fetchItemsFailure: (state, action: PayloadAction<string>) => {
+			state.error = action.payload
+			state.isLoading = false
+		},
+	},
+})
+
+export const {
+	setItems,
+	fetchItemsStart,
+	fetchItemsSuccess,
+	fetchItemsFailure,
+} = mySlice.actions
+
+export default mySlice.reducer
+```
+
+### Reglas Redux
+1. **Usar createSlice**, no createReducer/createAction separados
+2. **Definir interface** para el state
+3. **Inicializar estado** con valores por defecto
+4. **Patrón Start/Success/Failure** para operaciones async
+5. **Nombres descriptivos** para acciones
+6. **Exportar acciones y reducer** por separado
+
+## Servicios
+
+### Template de Servicio
+```typescript
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore'
+import { db } from './firebase'
+import type { MyModel } from '../types'
+
+/**
+ * Servicio para gestionar [entidad] en Firebase
+ */
+export class MyService {
+	private collectionName = 'my-collection'
+
+	/**
+	 * Obtiene todos los elementos
+	 */
+	async getAll(): Promise<MyModel[]> {
+		try {
+			const querySnapshot = await getDocs(collection(db, this.collectionName))
+			return querySnapshot.docs.map(doc => ({
+				id: doc.id,
+				...doc.data(),
+			} as MyModel))
+		} catch (error) {
+			console.error('Error al obtener elementos:', error)
+			throw new Error('No se pudieron cargar los elementos')
+		}
+	}
+
+	/**
+	 * Obtiene un elemento por ID
+	 */
+	async getById(id: string): Promise<MyModel | null> {
+		try {
+			const docRef = doc(db, this.collectionName, id)
+			const docSnap = await getDoc(docRef)
+			
+			if (!docSnap.exists()) {
+				return null
+			}
+
+			return {
+				id: docSnap.id,
+				...docSnap.data(),
+			} as MyModel
+		} catch (error) {
+			console.error('Error al obtener elemento:', error)
+			throw new Error('No se pudo cargar el elemento')
+		}
+	}
+
+	/**
+	 * Crea un nuevo elemento
+	 */
+	async create(data: Omit<MyModel, 'id'>): Promise<string> {
+		try {
+			const docRef = await addDoc(collection(db, this.collectionName), {
+				...data,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			return docRef.id
+		} catch (error) {
+			console.error('Error al crear elemento:', error)
+			throw new Error('No se pudo crear el elemento')
+		}
+	}
+
+	/**
+	 * Actualiza un elemento existente
+	 */
+	async update(id: string, data: Partial<MyModel>): Promise<void> {
+		try {
+			const docRef = doc(db, this.collectionName, id)
+			await updateDoc(docRef, {
+				...data,
+				updatedAt: new Date(),
+			})
+		} catch (error) {
+			console.error('Error al actualizar elemento:', error)
+			throw new Error('No se pudo actualizar el elemento')
+		}
+	}
+
+	/**
+	 * Elimina un elemento
+	 */
+	async delete(id: string): Promise<void> {
+		try {
+			const docRef = doc(db, this.collectionName, id)
+			await deleteDoc(docRef)
+		} catch (error) {
+			console.error('Error al eliminar elemento:', error)
+			throw new Error('No se pudo eliminar el elemento')
+		}
+	}
+}
+
+export const myService = new MyService()
+```
+
+### Reglas para Servicios
+1. **Clase con métodos públicos** para cada operación
+2. **Async/await** para operaciones asíncronas
+3. **Try/catch** en todas las operaciones
+4. **Errores descriptivos en español**
+5. **Logs con console.error**
+6. **JSDoc en español** para cada método
+7. **Tipos de retorno explícitos**
+8. **Exportar instancia singleton**
+
+## Internacionalización (i18n)
+
+### Uso Obligatorio
+```typescript
+// ✅ CORRECTO - Usar traducciones
+import { useTranslation } from '../hooks'
+
+function MyComponent() {
+	const { t } = useTranslation()
+	
+	return (
+		<View>
+			<Text>{t('auth.login.title')}</Text>
+			<Button>{t('common.save')}</Button>
+		</View>
+	)
+}
+
+// ❌ INCORRECTO - Texto hardcodeado
+function MyComponent() {
+	return (
+		<View>
+			<Text>Iniciar Sesión</Text>
+			<Button>Guardar</Button>
+		</View>
+	)
+}
+```
+
+### Agregar Nuevas Traducciones
+```typescript
+// 1. Agregar en src/i18n/locales/es.ts
+export default {
+	myFeature: {
+		title: 'Mi Nueva Función',
+		description: 'Esta es una descripción',
+		button: 'Hacer algo',
+		errors: {
+			generic: 'Ocurrió un error',
+		},
+	},
+}
+
+// 2. Agregar en src/i18n/locales/en.ts
+export default {
+	myFeature: {
+		title: 'My New Feature',
+		description: 'This is a description',
+		button: 'Do something',
+		errors: {
+			generic: 'An error occurred',
+		},
+	},
+}
+
+// 3. Usar en componente
+const { t } = useTranslation()
+t('myFeature.title')
+```
+
+### Reglas i18n
+1. **NUNCA hardcodear texto visible**
+2. **Estructura jerárquica** en archivos de traducción
+3. **Claves descriptivas** (no `text1`, `btn2`)
+4. **Mantener consistencia** entre es.ts y en.ts
+5. **Español por defecto** para usuarios colombianos
+6. **Validaciones también traducidas**
+
+## Validación de Formularios
+
+### Template con Zod y Traducciones
+```typescript
+import { z } from 'zod'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from '../hooks'
+
+// Schema factory que recibe función de traducción
+const createMySchema = (t: (key: string) => string) =>
+	z.object({
+		email: z
+			.string()
+			.min(1, t('form.errors.required'))
+			.email(t('form.errors.invalidEmail')),
+		password: z
+			.string()
+			.min(6, t('form.errors.passwordTooShort')),
+		name: z
+			.string()
+			.min(2, t('form.errors.nameRequired')),
+	})
+
+type FormData = z.infer<ReturnType<typeof createMySchema>>
+
+function MyForm() {
+	const { t } = useTranslation()
+	const schema = createMySchema(t)
+
+	const {
+		control,
+		handleSubmit,
+		formState: { errors },
+	} = useForm<FormData>({
+		resolver: zodResolver(schema),
+		defaultValues: {
+			email: '',
+			password: '',
+			name: '',
+		},
+	})
+
+	const onSubmit = async (data: FormData) => {
+		try {
+			// Procesar datos
+		} catch (error) {
+			// Manejar error
+		}
+	}
+
+	return (
+		<View>
+			<Controller
+				control={control}
+				name="email"
+				render={({ field: { onChange, value } }) => (
+					<Input
+						label={t('form.email')}
+						value={value}
+						onChangeText={onChange}
+						error={errors.email?.message}
+					/>
+				)}
+			/>
+			<Button onPress={handleSubmit(onSubmit)}>
+				{t('form.submit')}
+			</Button>
+		</View>
+	)
+}
+```
+
+### Reglas para Formularios
+1. **Zod para validación**, no validación manual
+2. **Schema factory** para traducciones dinámicas
+3. **React Hook Form** para gestión de formularios
+4. **Controller** para componentes custom
+5. **Mensajes de error traducidos**
+6. **Valores por defecto** siempre definidos
+7. **Try/catch** en onSubmit
+
+## Estilos
+
+### Buenas Prácticas
+```typescript
+import { StyleSheet } from 'react-native'
+import { colors, spacing, borderRadius, typography } from '../constants/theme'
+
+// ✅ CORRECTO
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		padding: spacing.md,
+		backgroundColor: colors.background,
+	},
+	title: {
+		fontSize: typography.sizes.xl,
+		fontWeight: typography.weights.bold,
+		color: colors.textPrimary,
+		marginBottom: spacing.sm,
+	},
+	card: {
+		padding: spacing.lg,
+		borderRadius: borderRadius.md,
+		backgroundColor: colors.card,
+		shadowColor: colors.shadow,
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.1,
+		shadowRadius: 4,
+		elevation: 3, // Android
+	},
+})
+
+// ❌ INCORRECTO - Valores hardcodeados
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		padding: 16,
+		backgroundColor: '#FFFFFF',
+	},
+	title: {
+		fontSize: 24,
+		fontWeight: 'bold',
+		color: '#000000',
+		marginBottom: 8,
+	},
+})
+```
+
+### Reglas de Estilos
+1. **Usar constantes de theme** (colors, spacing, etc.)
+2. **StyleSheet.create** para optimización
+3. **Nombres descriptivos** para estilos
+4. **Elevation para Android**, shadowX para iOS
+5. **Mobile first** (diseño para móvil primero)
+6. **Responsive** cuando sea necesario
+7. **No estilos inline** (excepto dinámicos)
+
+## Manejo de Errores
+
+### Template
+```typescript
+// ✅ CORRECTO
+try {
+	setIsLoading(true)
+	setError(null)
+	
+	const result = await myService.getData()
+	
+	if (!result) {
+		throw new Error('No se encontraron datos')
+	}
+	
+	setData(result)
+} catch (err) {
+	const errorMessage = err instanceof Error 
+		? err.message 
+		: 'Ocurrió un error inesperado'
+	
+	setError(errorMessage)
+	console.error('Error al cargar datos:', err)
+	
+	// Opcional: mostrar alerta al usuario
+	Alert.alert(
+		t('common.error'),
+		errorMessage,
+		[{ text: t('common.ok') }]
+	)
+} finally {
+	setIsLoading(false)
+}
+
+// ❌ INCORRECTO
+try {
+	const result = await myService.getData()
+	setData(result)
+} catch (err) {
+	// Error silencioso - no hacer esto
+}
+```
+
+### Reglas de Errores
+1. **Try/catch** en todas las operaciones async
+2. **Mensajes en español** para usuarios
+3. **Console.error** para debug
+4. **Type guard** para Error (instanceof Error)
+5. **Estado de error** en componentes/hooks
+6. **Finally** para cleanup (loading, etc.)
+7. **Alertas traducidas** con i18n
+
+## TypeScript
+
+### Reglas Estrictas
+```typescript
+// ✅ CORRECTO
+interface User {
+	id: string
+	name: string
+	email: string
+	role: 'customer' | 'owner' | 'barber'
+	phone?: string // Opcional con ?
+}
+
+function getUser(id: string): Promise<User | null> {
+	// Implementación
+}
+
+const handleUser = (user: User | null) => {
+	if (!user) {
+		return // Type guard
+	}
+	
+	console.log(user.name) // OK, user no es null
+}
+
+// ❌ INCORRECTO
+function getUser(id: any): any { // No usar any
+	// Implementación
+}
+
+const handleUser = (user: User) => {
+	console.log(user.name) // user podría ser undefined
+}
+```
+
+### Reglas TypeScript
+1. **Strict mode activado**
+2. **NUNCA usar `any`**, usar `unknown` si es necesario
+3. **Interfaces para objetos**, types para unions
+4. **Tipos de retorno explícitos** en funciones
+5. **Type guards** para null/undefined
+6. **Utility types** (Partial, Pick, Omit, etc.)
+7. **Generics** cuando sea apropiado
+
+## React 19 - Nuevas Características
+
+### use() Hook - Leer Promesas y Context
+```typescript
+import { use } from 'react'
+
+// ✅ CORRECTO - Leer promesas directamente
+function UserProfile({ userPromise }: { userPromise: Promise<User> }) {
+	const user = use(userPromise)
+	
+	return <Text>{user.name}</Text>
+}
+
+// ✅ CORRECTO - Leer context sin useContext
+function MyComponent() {
+	const theme = use(ThemeContext)
+	
+	return <View style={{ backgroundColor: theme.background }} />
+}
+
+// Usar con Suspense para loading states
+function App() {
+	const userPromise = fetchUser()
+	
+	return (
+		<Suspense fallback={<LoadingScreen />}>
+			<UserProfile userPromise={userPromise} />
+		</Suspense>
+	)
+}
+```
+
+### Actions y useActionState - Formularios Mejorados
+```typescript
+import { useActionState } from 'react'
+
+/**
+ * Action para manejar envío de formularios con estados automáticos
+ */
+async function submitBooking(
+	prevState: { message: string } | null,
+	formData: FormData
+) {
+	try {
+		const service = formData.get('service')
+		const date = formData.get('date')
+		
+		await bookingService.create({ service, date })
+		
+		return { message: 'Reserva creada exitosamente' }
+	} catch (error) {
+		return { message: 'Error al crear reserva' }
+	}
+}
+
+function BookingForm() {
+	const { t } = useTranslation()
+	const [state, action, isPending] = useActionState(submitBooking, null)
+	
+	return (
+		<form action={action}>
+			<Input name="service" label={t('booking.service')} />
+			<Input name="date" label={t('booking.date')} />
+			
+			{state?.message && (
+				<Text>{state.message}</Text>
+			)}
+			
+			<Button disabled={isPending}>
+				{isPending ? t('common.loading') : t('booking.submit')}
+			</Button>
+		</form>
+	)
+}
+```
+
+### useOptimistic - Actualizaciones Optimistas
+```typescript
+import { useOptimistic } from 'react'
+
+/**
+ * Hook para actualizaciones optimistas en UI
+ * Muestra cambios instantáneamente mientras se procesa en servidor
+ */
+function BookingsList({ bookings }: { bookings: Booking[] }) {
+	const { t } = useTranslation()
+	const [optimisticBookings, addOptimisticBooking] = useOptimistic(
+		bookings,
+		(state, newBooking: Booking) => [...state, newBooking]
+	)
+
+	const handleBook = async (bookingData: BookingData) => {
+		// Añadir optimísticamente
+		const tempBooking = {
+			id: 'temp-' + Date.now(),
+			...bookingData,
+			status: 'pending' as const,
+		}
+		
+		addOptimisticBooking(tempBooking)
+		
+		// Enviar al servidor
+		try {
+			await bookingService.create(bookingData)
+		} catch (error) {
+			// Si falla, React automáticamente revierte el cambio optimista
+			Alert.alert(t('common.error'), t('booking.errors.create'))
+		}
+	}
+
+	return (
+		<FlatList
+			data={optimisticBookings}
+			renderItem={({ item }) => (
+				<BookingCard 
+					booking={item} 
+					isOptimistic={item.id.startsWith('temp-')}
+				/>
+			)}
+		/>
+	)
+}
+```
+
+### ref como Prop - Simplificación
+```typescript
+// ✅ CORRECTO - React 19: ref como prop normal
+interface InputProps {
+	label: string
+	ref?: React.Ref<TextInput>
+}
+
+export function Input({ label, ref, ...props }: InputProps) {
+	return (
+		<View>
+			<Text>{label}</Text>
+			<TextInput ref={ref} {...props} />
+		</View>
+	)
+}
+
+// ❌ OBSOLETO - React 18: forwardRef ya no es necesario
+export const Input = forwardRef<TextInput, InputProps>(
+	({ label, ...props }, ref) => {
+		return (
+			<View>
+				<Text>{label}</Text>
+				<TextInput ref={ref} {...props} />
+			</View>
+		)
+	}
+)
+```
+
+### Mejoras en Metadata y Document
+```typescript
+// ✅ CORRECTO - React 19: Metadata en componentes
+function BookingPage() {
+	return (
+		<>
+			<title>Reservas - BarberBooking</title>
+			<meta name="description" content="Gestiona tus reservas" />
+			
+			<View>
+				{/* Contenido de la página */}
+			</View>
+		</>
+	)
+}
+```
+
+### Suspense Mejorado
+```typescript
+import { Suspense } from 'react'
+
+/**
+ * Suspense ahora es más robusto y soporta más casos de uso
+ */
+function App() {
+	return (
+		<Suspense fallback={<LoadingScreen message="Cargando barberías..." />}>
+			<BusinessList />
+		</Suspense>
+	)
+}
+
+// Componente que usa 'use' para leer promesas
+function BusinessList() {
+	const businesses = use(fetchBusinesses())
+	
+	return (
+		<FlatList
+			data={businesses}
+			renderItem={({ item }) => <BusinessCard business={item} />}
+		/>
+	)
+}
+```
+
+### Server Components (Web - Futuro)
+```typescript
+// Para cuando uses Expo Web con Next.js
+
+// ✅ Server Component (sin 'use client')
+async function BusinessList() {
+	// Esto corre en el servidor
+	const businesses = await db.business.findMany()
+	
+	return (
+		<View>
+			{businesses.map(business => (
+				<BusinessCard key={business.id} business={business} />
+			))}
+		</View>
+	)
+}
+
+// ✅ Client Component (con 'use client')
+'use client'
+
+function InteractiveMap() {
+	const [location, setLocation] = useState(null)
+	
+	// Esto corre en el cliente
+	return <MapView onLocationChange={setLocation} />
+}
+```
+
+### Mejoras en Context API
+```typescript
+/**
+ * React 19: Context API más eficiente
+ * No necesitas Provider en algunos casos
+ */
+import { createContext, use } from 'react'
+
+const ThemeContext = createContext({
+	colors: colors,
+	spacing: spacing,
+})
+
+// ✅ Usar directamente sin Provider (si no necesitas cambiar valores)
+function MyComponent() {
+	const theme = use(ThemeContext)
+	
+	return <View style={{ padding: theme.spacing.md }} />
+}
+
+// ✅ Con Provider cuando necesitas valores dinámicos
+function App() {
+	const [isDark, setIsDark] = useState(false)
+	
+	return (
+		<ThemeContext.Provider value={{ 
+			colors: isDark ? darkColors : lightColors 
+		}}>
+			<MyComponent />
+		</ThemeContext.Provider>
+	)
+}
+```
+
+### Error Boundaries Mejorados
+```typescript
+import { Component, ErrorInfo } from 'react'
+
+/**
+ * Error Boundary mejorado para React 19
+ */
+interface Props {
+	children: React.ReactNode
+	fallback?: (error: Error) => React.ReactNode
+}
+
+interface State {
+	hasError: boolean
+	error: Error | null
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+	constructor(props: Props) {
+		super(props)
+		this.state = { hasError: false, error: null }
+	}
+
+	static getDerivedStateFromError(error: Error): State {
+		return { hasError: true, error }
+	}
+
+	componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+		console.error('Error capturado:', error, errorInfo)
+		// Enviar a servicio de logging
+	}
+
+	render() {
+		if (this.state.hasError) {
+			return this.props.fallback?.(this.state.error!) ?? (
+				<View style={styles.errorContainer}>
+					<Text style={styles.errorTitle}>Algo salió mal</Text>
+					<Text style={styles.errorMessage}>
+						{this.state.error?.message}
+					</Text>
+					<Button onPress={() => this.setState({ hasError: false })}>
+						Intentar de nuevo
+					</Button>
+				</View>
+			)
+		}
+
+		return this.props.children
+	}
+}
+```
+
+### Reglas para React 19
+1. **Usar `use()` hook** para promesas y context
+2. **useActionState** para formularios con estados
+3. **useOptimistic** para actualizaciones optimistas
+4. **ref como prop** directamente, sin forwardRef
+5. **Suspense** para todos los componentes async
+6. **Error Boundaries** para manejo robusto de errores
+7. **Actions** en formularios para mejor UX
+
+### Migración de React 18 a 19
+```typescript
+// ❌ React 18 - Obsoleto
+const MyComponent = forwardRef((props, ref) => {
+	const context = useContext(MyContext)
+	return <View ref={ref} />
+})
+
+// ✅ React 19 - Nuevo
+function MyComponent({ ref, ...props }) {
+	const context = use(MyContext)
+	return <View ref={ref} />
+}
+```
+
+## Testing (Futuro)
+
+### Template para Tests
+```typescript
+import { render, fireEvent, waitFor } from '@testing-library/react-native'
+import { MyComponent } from '../my-component'
+
+describe('MyComponent', () => {
+	it('debe renderizar correctamente', () => {
+		const { getByText } = render(<MyComponent title="Test" />)
+		expect(getByText('Test')).toBeTruthy()
+	})
+
+	it('debe manejar el evento onPress', async () => {
+		const mockOnPress = jest.fn()
+		const { getByText } = render(
+			<MyComponent title="Test" onPress={mockOnPress} />
+		)
+		
+		fireEvent.press(getByText('Test'))
+		
+		await waitFor(() => {
+			expect(mockOnPress).toHaveBeenCalledTimes(1)
+		})
+	})
+})
+```
+
+## Performance
+
+### Optimizaciones Obligatorias
+```typescript
+import React, { memo, useCallback, useMemo } from 'react'
+
+// ✅ CORRECTO - Memoizar componentes pesados
+export const HeavyComponent = memo(function HeavyComponent({ data }: Props) {
+	// Renderizado costoso
+	return <View>{/* ... */}</View>
+})
+
+// ✅ CORRECTO - useCallback para funciones en props
+function Parent() {
+	const handlePress = useCallback(() => {
+		// Lógica
+	}, [])
+
+	return <Child onPress={handlePress} />
+}
+
+// ✅ CORRECTO - useMemo para cálculos costosos
+function MyComponent({ items }: Props) {
+	const sortedItems = useMemo(() => {
+		return items.sort((a, b) => a.name.localeCompare(b.name))
+	}, [items])
+
+	return <FlatList data={sortedItems} />
+}
+
+// ✅ CORRECTO - FlatList para listas largas
+<FlatList
+	data={items}
+	renderItem={({ item }) => <ItemCard item={item} />}
+	keyExtractor={(item) => item.id}
+	removeClippedSubviews={true}
+	maxToRenderPerBatch={10}
+	windowSize={5}
+/>
+
+// ❌ INCORRECTO - map() en listas largas
+{items.map(item => <ItemCard key={item.id} item={item} />)}
+```
+
+### Reglas de Performance
+1. **memo()** para componentes que re-renderizan frecuentemente
+2. **useCallback** para funciones pasadas como props
+3. **useMemo** para cálculos costosos
+4. **FlatList** para listas > 20 items
+5. **keyExtractor** único y estable
+6. **Evitar funciones inline** en renderItem
+7. **removeClippedSubviews** para listas muy largas
+
+## Commits
+
+### Formato
+```bash
+# ✅ CORRECTO
+git commit -m "feat: agregar selector de idioma"
+git commit -m "fix: corregir error en validación de email"
+git commit -m "refactor: mejorar estructura de componentes"
+git commit -m "docs: actualizar README con guía de i18n"
+git commit -m "style: ajustar espaciado en formulario de login"
+git commit -m "perf: optimizar renderizado de lista de barberías"
+git commit -m "test: agregar tests para hook useAuth"
+
+# ❌ INCORRECTO
+git commit -m "cambios"
+git commit -m "fix bug"
+git commit -m "WIP"
+```
+
+### Prefijos Obligatorios
+- `feat:` - Nueva funcionalidad
+- `fix:` - Corrección de bug
+- `refactor:` - Refactorización sin cambio funcional
+- `docs:` - Documentación
+- `style:` - Formato, espacios (no CSS)
+- `perf:` - Mejora de performance
+- `test:` - Tests
+- `chore:` - Mantenimiento, dependencias
+
+## Seguridad
+
+### Reglas Críticas
+```typescript
+// ✅ CORRECTO - Variables de entorno
+import Constants from 'expo-constants'
+
+const apiKey = Constants.expoConfig?.extra?.firebaseApiKey
+
+// ❌ INCORRECTO - Hardcodear credenciales
+const apiKey = 'AIza...' // NUNCA hacer esto
+
+// ✅ CORRECTO - Sanitizar inputs
+import DOMPurify from 'dompurify'
+
+const cleanInput = DOMPurify.sanitize(userInput)
+
+// ✅ CORRECTO - Validar en cliente Y servidor
+const isValidEmail = z.string().email().safeParse(email)
+
+if (!isValidEmail.success) {
+	throw new Error('Email inválido')
+}
+```
+
+### Checklist de Seguridad
+1. **NUNCA** hardcodear API keys o secrets
+2. **Usar .env** para configuración sensible
+3. **Validar inputs** siempre (cliente y servidor)
+4. **Sanitizar** HTML y strings de usuarios
+5. **HTTPS** para todas las peticiones
+6. **Auth tokens** en Secure Store
+7. **Permisos mínimos** para Firebase
+
+## Accesibilidad
+
+### Implementación Obligatoria
+```typescript
+// ✅ CORRECTO
+<Pressable
+	accessible={true}
+	accessibilityLabel={t('button.login')}
+	accessibilityRole="button"
+	accessibilityHint={t('button.login.hint')}
+	onPress={handleLogin}
+>
+	<Text>{t('auth.login')}</Text>
+</Pressable>
+
+<TextInput
+	accessible={true}
+	accessibilityLabel={t('form.email')}
+	accessibilityHint={t('form.email.hint')}
+/>
+```
+
+### Reglas a11y
+1. **accessible={true}** en elementos interactivos
+2. **accessibilityLabel** descriptivo
+3. **accessibilityRole** apropiado
+4. **Contraste de colores** suficiente
+5. **Tamaños táctiles** mínimo 44x44
+6. **Navegación por teclado** funcional
+7. **Screen readers** considerados
+
+## Cuando Crear Nuevos Archivos
+
+### Componentes
+- Crear en `src/components/` si es reutilizable
+- Crear en `src/components/ui/` si es componente base UI
+- Exportar en `src/components/ui/index.ts` si es UI común
+
+### Hooks
+- Crear en `src/hooks/` con prefijo `use-`
+- Exportar en `src/hooks/index.ts`
+- Documentar con JSDoc en español
+
+### Servicios
+- Crear en `src/services/` con sufijo `-service`
+- Exportar instancia singleton
+- Incluir manejo de errores
+
+### Tipos
+- Crear en `src/types/` agrupados por dominio
+- Exportar en `src/types/index.ts`
+- Usar interfaces para objetos
+
+### Pantallas
+- Crear en `app/` siguiendo estructura de Expo Router
+- Agrupar por funcionalidad en subcarpetas
+- Seguir convención de nombres de Expo Router
+
+## Checklist Pre-Commit
+
+Antes de hacer commit, verificar:
+
+- [ ] Código compila sin errores TypeScript
+- [ ] No hay console.log (solo console.error para errors)
+- [ ] Todos los textos usan i18n (t('clave'))
+- [ ] Props tienen interface definida
+- [ ] Componentes tienen JSDoc en español
+- [ ] Estilos usan constantes de theme
+- [ ] Funciones async tienen try/catch
+- [ ] Nombres siguen convenciones del proyecto
+- [ ] No hay secrets hardcodeados
+- [ ] Componentes tienen accessibility labels
+- [ ] Traducciones agregadas en ES y EN
+
+## Recursos de Referencia
+
+- [React Native Docs](https://reactnative.dev/)
+- [Expo Docs](https://docs.expo.dev/)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Redux Toolkit](https://redux-toolkit.js.org/)
+- [React Hook Form](https://react-hook-form.com/)
+- [Zod](https://zod.dev/)
+
+## Contacto y Soporte
+
+Para dudas sobre estas reglas o el proyecto:
+- Revisar README.md
+- Revisar TRANSLATION_SUMMARY.md para i18n
+- Consultar con el equipo
+
+---
+
+**Última actualización**: Noviembre 2025
+**Versión**: 1.0
+**Idioma del proyecto**: Español (Colombia 🇨🇴) + English
+
