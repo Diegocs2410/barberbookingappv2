@@ -8,6 +8,7 @@ import {
 	Modal,
 	KeyboardAvoidingView,
 	Platform,
+	ActivityIndicator,
 } from 'react-native'
 import { Text } from 'react-native-paper'
 import { router } from 'expo-router'
@@ -16,21 +17,19 @@ import { Ionicons } from '@expo/vector-icons'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useAuth, useBusiness, useThemeColors } from '../../../src/hooks'
+import { useAuth, useBusiness, useThemeColors, useTranslation } from '../../../src/hooks'
 import { Card, Button, Input, Avatar, LoadingScreen } from '../../../src/components/ui'
 import { spacing, borderRadius } from '../../../src/constants/theme'
-import { Barber } from '../../../src/types'
+import { Barber, User } from '../../../src/types'
 
-const barberSchema = z.object({
-	name: z.string().min(2, 'Name is required'),
-	specialties: z.string().optional(),
-})
-
-type BarberFormData = z.infer<typeof barberSchema>
-
+/**
+ * Pantalla de gestión de barberos para el owner del negocio
+ * Permite agregar, editar, vincular y desvincular barberos
+ */
 export default function BarbersScreen() {
 	const { user } = useAuth()
 	const { colors } = useThemeColors()
+	const { t } = useTranslation()
 	const {
 		currentBusiness,
 		barbers,
@@ -40,24 +39,43 @@ export default function BarbersScreen() {
 		addBarber,
 		updateBarber,
 		removeBarber,
+		findUserByEmail,
+		linkBarber,
+		unlinkBarber,
 	} = useBusiness()
 
 	const [modalVisible, setModalVisible] = useState(false)
 	const [editingBarber, setEditingBarber] = useState<Barber | null>(null)
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [isSearching, setIsSearching] = useState(false)
+	const [foundUser, setFoundUser] = useState<User | null>(null)
+	const [searchedEmail, setSearchedEmail] = useState('')
+
+	// Schema con traducciones
+	const barberSchema = z.object({
+		name: z.string().min(2, t('owner.barbers.errors.nameRequired')),
+		email: z.string().email(t('auth.login.errors.invalidEmail')).optional().or(z.literal('')),
+		specialties: z.string().optional(),
+	})
+
+	type BarberFormData = z.infer<typeof barberSchema>
 
 	const {
 		control,
 		handleSubmit,
 		reset,
+		watch,
 		formState: { errors },
 	} = useForm<BarberFormData>({
 		resolver: zodResolver(barberSchema),
 		defaultValues: {
 			name: '',
+			email: '',
 			specialties: '',
 		},
 	})
+
+	const emailValue = watch('email')
 
 	useEffect(() => {
 		if (user?.id) {
@@ -71,10 +89,42 @@ export default function BarbersScreen() {
 		}
 	}, [currentBusiness?.id])
 
+	// Buscar usuario cuando cambia el email
+	useEffect(() => {
+		const searchUser = async () => {
+			if (!emailValue || emailValue.length < 5 || !emailValue.includes('@')) {
+				setFoundUser(null)
+				setSearchedEmail('')
+				return
+			}
+
+			// Evitar búsquedas repetidas del mismo email
+			if (emailValue === searchedEmail) return
+
+			setIsSearching(true)
+			try {
+				const user = await findUserByEmail(emailValue)
+				setFoundUser(user)
+				setSearchedEmail(emailValue)
+			} catch (error) {
+				console.error('Error al buscar usuario:', error)
+				setFoundUser(null)
+			} finally {
+				setIsSearching(false)
+			}
+		}
+
+		const timeoutId = setTimeout(searchUser, 500)
+		return () => clearTimeout(timeoutId)
+	}, [emailValue, searchedEmail, findUserByEmail])
+
 	const openAddModal = () => {
 		setEditingBarber(null)
+		setFoundUser(null)
+		setSearchedEmail('')
 		reset({
 			name: '',
+			email: '',
 			specialties: '',
 		})
 		setModalVisible(true)
@@ -82,8 +132,11 @@ export default function BarbersScreen() {
 
 	const openEditModal = (barber: Barber) => {
 		setEditingBarber(barber)
+		setFoundUser(null)
+		setSearchedEmail('')
 		reset({
 			name: barber.name,
+			email: barber.email || '',
 			specialties: barber.specialties.join(', '),
 		})
 		setModalVisible(true)
@@ -91,16 +144,39 @@ export default function BarbersScreen() {
 
 	const handleDelete = (barber: Barber) => {
 		Alert.alert(
-			'Remove Barber',
-			`Are you sure you want to remove "${barber.name}"?`,
+			t('owner.barbers.deleteBarber'),
+			t('owner.barbers.deleteConfirm'),
 			[
-				{ text: 'Cancel', style: 'cancel' },
+				{ text: t('common.cancel'), style: 'cancel' },
 				{
-					text: 'Remove',
+					text: t('common.delete'),
 					style: 'destructive',
 					onPress: async () => {
 						if (currentBusiness?.id) {
 							await removeBarber(currentBusiness.id, barber.id)
+						}
+					},
+				},
+			]
+		)
+	}
+
+	const handleUnlink = (barber: Barber) => {
+		Alert.alert(
+			t('owner.barbers.unlinkBarber'),
+			t('owner.barbers.unlinkConfirm'),
+			[
+				{ text: t('common.cancel'), style: 'cancel' },
+				{
+					text: t('common.confirm'),
+					onPress: async () => {
+						if (currentBusiness?.id) {
+							try {
+								await unlinkBarber(currentBusiness.id, barber.id)
+								loadBarbers(currentBusiness.id)
+							} catch (error) {
+								Alert.alert(t('common.error'), t('owner.barbers.unlinkError'))
+							}
 						}
 					},
 				},
@@ -120,20 +196,47 @@ export default function BarbersScreen() {
 			if (editingBarber) {
 				await updateBarber(currentBusiness.id, editingBarber.id, {
 					name: data.name,
+					email: data.email || undefined,
 					specialties,
 				})
 			} else {
-				await addBarber(currentBusiness.id, {
-					userId: '', // Will be linked later
+				// Crear el barbero
+				const newBarber = await addBarber(currentBusiness.id, {
+					userId: foundUser?.id || '',
 					name: data.name,
+					email: data.email || undefined,
 					specialties,
 				})
+
+				// Si encontramos un usuario, preguntar si desea vincularlo
+				if (foundUser && newBarber) {
+					Alert.alert(
+						t('owner.barbers.linkBarber'),
+						t('owner.barbers.linkConfirm', { name: foundUser.name }),
+						[
+							{ text: t('common.no'), style: 'cancel' },
+							{
+								text: t('common.yes'),
+								onPress: async () => {
+									try {
+										await linkBarber(currentBusiness.id, newBarber.id, foundUser.id)
+										loadBarbers(currentBusiness.id)
+									} catch (error) {
+										Alert.alert(t('common.error'), t('owner.barbers.linkError'))
+									}
+								},
+							},
+						]
+					)
+				}
 			}
 
 			setModalVisible(false)
 			reset()
+			setFoundUser(null)
+			setSearchedEmail('')
 		} catch (error) {
-			Alert.alert('Error', 'Failed to save barber')
+			Alert.alert(t('common.error'), t('owner.barbers.saveError'))
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -144,7 +247,29 @@ export default function BarbersScreen() {
 			<View style={styles.barberContent}>
 				<Avatar source={item.photoUrl} name={item.name} size="medium" />
 				<View style={styles.barberInfo}>
-					<Text style={[styles.barberName, { color: colors.textPrimary }]}>{item.name}</Text>
+					<View style={styles.barberNameRow}>
+						<Text style={[styles.barberName, { color: colors.textPrimary }]}>{item.name}</Text>
+						{item.isLinked ? (
+							<View style={[styles.statusBadge, { backgroundColor: colors.success + '20' }]}>
+								<Ionicons name="checkmark-circle" size={12} color={colors.success} />
+								<Text style={[styles.statusText, { color: colors.success }]}>
+									{t('owner.barbers.linked')}
+								</Text>
+							</View>
+						) : (
+							<View style={[styles.statusBadge, { backgroundColor: colors.warning + '20' }]}>
+								<Ionicons name="time-outline" size={12} color={colors.warning} />
+								<Text style={[styles.statusText, { color: colors.warning }]}>
+									{t('owner.barbers.pending')}
+								</Text>
+							</View>
+						)}
+					</View>
+					{item.email && (
+						<Text style={[styles.barberEmail, { color: colors.textMuted }]}>
+							{item.email}
+						</Text>
+					)}
 					{item.specialties.length > 0 && (
 						<Text style={[styles.barberSpecialties, { color: colors.textSecondary }]}>
 							{item.specialties.join(' • ')}
@@ -152,6 +277,14 @@ export default function BarbersScreen() {
 					)}
 				</View>
 				<View style={styles.barberActions}>
+					{item.isLinked && (
+						<Pressable
+							style={styles.iconButton}
+							onPress={() => handleUnlink(item)}
+						>
+							<Ionicons name="unlink-outline" size={18} color={colors.warning} />
+						</Pressable>
+					)}
 					<Pressable
 						style={styles.iconButton}
 						onPress={() => openEditModal(item)}
@@ -170,7 +303,7 @@ export default function BarbersScreen() {
 	)
 
 	if (isLoading && barbers.length === 0) {
-		return <LoadingScreen message="Loading barbers..." />
+		return <LoadingScreen message={t('common.loading')} />
 	}
 
 	return (
@@ -179,7 +312,9 @@ export default function BarbersScreen() {
 				<Pressable onPress={() => router.back()} style={styles.backButton}>
 					<Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
 				</Pressable>
-				<Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Barbers</Text>
+				<Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+					{t('owner.barbers.title')}
+				</Text>
 				<Pressable onPress={openAddModal} style={styles.addButton}>
 					<Ionicons name="add" size={24} color={colors.textPrimary} />
 				</Pressable>
@@ -200,12 +335,14 @@ export default function BarbersScreen() {
 								color={colors.textMuted}
 							/>
 						</View>
-						<Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No barbers yet</Text>
+						<Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+							{t('owner.barbers.noBarbers')}
+						</Text>
 						<Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-							Add barbers to your team to start accepting bookings
+							{t('owner.barbers.addFirstBarber')}
 						</Text>
 						<Button onPress={openAddModal} style={styles.emptyButton}>
-							Add Barber
+							{t('owner.barbers.addBarber')}
 						</Button>
 					</View>
 				}
@@ -225,10 +362,12 @@ export default function BarbersScreen() {
 					<SafeAreaView style={styles.modalContent}>
 						<View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
 							<Pressable onPress={() => setModalVisible(false)}>
-								<Text style={[styles.cancelText, { color: colors.textPrimary }]}>Cancel</Text>
+								<Text style={[styles.cancelText, { color: colors.textPrimary }]}>
+									{t('common.cancel')}
+								</Text>
 							</Pressable>
 							<Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-								{editingBarber ? 'Edit Barber' : 'Add Barber'}
+								{editingBarber ? t('owner.barbers.editBarber') : t('owner.barbers.addBarber')}
 							</Text>
 							<View style={{ width: 50 }} />
 						</View>
@@ -239,12 +378,54 @@ export default function BarbersScreen() {
 								name="name"
 								render={({ field: { onChange, value } }) => (
 									<Input
-										label="Barber Name"
+										label={t('owner.barbers.barberName')}
 										value={value}
 										onChangeText={onChange}
-										placeholder="Full name"
+										placeholder={t('owner.barbers.namePlaceholder')}
 										error={errors.name?.message ?? ''}
 									/>
+								)}
+							/>
+
+							<Controller
+								control={control}
+								name="email"
+								render={({ field: { onChange, value } }) => (
+									<View>
+										<Input
+											label={t('owner.barbers.barberEmail')}
+											value={value || ''}
+											onChangeText={onChange}
+											placeholder="correo@ejemplo.com"
+											keyboardType="email-address"
+											autoCapitalize="none"
+											error={errors.email?.message ?? ''}
+										/>
+										{isSearching && (
+											<View style={styles.searchingContainer}>
+												<ActivityIndicator size="small" color={colors.primary} />
+												<Text style={[styles.searchingText, { color: colors.textMuted }]}>
+													{t('owner.barbers.searchingUser')}
+												</Text>
+											</View>
+										)}
+										{!isSearching && foundUser && !editingBarber && (
+											<View style={[styles.userFoundContainer, { backgroundColor: colors.success + '15' }]}>
+												<Ionicons name="checkmark-circle" size={18} color={colors.success} />
+												<Text style={[styles.userFoundText, { color: colors.success }]}>
+													{t('owner.barbers.userFound', { name: foundUser.name })}
+												</Text>
+											</View>
+										)}
+										{!isSearching && !foundUser && searchedEmail && !editingBarber && (
+											<View style={[styles.userNotFoundContainer, { backgroundColor: colors.surfaceVariant }]}>
+												<Ionicons name="information-circle-outline" size={18} color={colors.textMuted} />
+												<Text style={[styles.userNotFoundText, { color: colors.textMuted }]}>
+													{t('owner.barbers.userNotFound')}
+												</Text>
+											</View>
+										)}
+									</View>
 								)}
 							/>
 
@@ -253,16 +434,16 @@ export default function BarbersScreen() {
 								name="specialties"
 								render={({ field: { onChange, value } }) => (
 									<Input
-										label="Specialties (optional)"
+										label={t('owner.barbers.specialties')}
 										value={value || ''}
 										onChangeText={onChange}
-										placeholder="e.g., Fades, Beard Trims, Hot Towel Shaves"
+										placeholder={t('owner.barbers.specialtiesPlaceholder')}
 									/>
 								)}
 							/>
 
 							<Text style={[styles.hint, { color: colors.textMuted }]}>
-								Separate specialties with commas
+								{t('owner.barbers.specialtiesHint')}
 							</Text>
 
 							<Button
@@ -270,7 +451,7 @@ export default function BarbersScreen() {
 								loading={isSubmitting}
 								style={styles.submitButton}
 							>
-								{editingBarber ? 'Save Changes' : 'Add Barber'}
+								{editingBarber ? t('common.save') : t('owner.barbers.addBarber')}
 							</Button>
 						</View>
 					</SafeAreaView>
@@ -323,9 +504,31 @@ const styles = StyleSheet.create({
 	barberInfo: {
 		flex: 1,
 	},
+	barberNameRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.sm,
+		flexWrap: 'wrap',
+	},
 	barberName: {
 		fontSize: 16,
 		fontWeight: '600',
+	},
+	statusBadge: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 4,
+		paddingHorizontal: spacing.sm,
+		paddingVertical: 2,
+		borderRadius: borderRadius.full,
+	},
+	statusText: {
+		fontSize: 11,
+		fontWeight: '600',
+	},
+	barberEmail: {
+		fontSize: 12,
+		marginTop: 2,
 	},
 	barberSpecialties: {
 		fontSize: 13,
@@ -399,5 +602,42 @@ const styles = StyleSheet.create({
 	},
 	submitButton: {
 		marginTop: spacing.lg,
+	},
+	searchingContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.sm,
+		marginTop: spacing.xs,
+		marginBottom: spacing.sm,
+	},
+	searchingText: {
+		fontSize: 13,
+	},
+	userFoundContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.sm,
+		padding: spacing.sm,
+		borderRadius: borderRadius.md,
+		marginTop: spacing.xs,
+		marginBottom: spacing.sm,
+	},
+	userFoundText: {
+		fontSize: 13,
+		fontWeight: '500',
+		flex: 1,
+	},
+	userNotFoundContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.sm,
+		padding: spacing.sm,
+		borderRadius: borderRadius.md,
+		marginTop: spacing.xs,
+		marginBottom: spacing.sm,
+	},
+	userNotFoundText: {
+		fontSize: 13,
+		flex: 1,
 	},
 })

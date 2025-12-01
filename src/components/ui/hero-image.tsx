@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Image, StyleSheet, ImageSourcePropType } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useThemeColors } from '../../hooks'
 
 /**
@@ -46,35 +47,33 @@ export function HeroImage({
 				style={styles.image}
 				resizeMode="cover"
 			/>
+			{/* Overlay oscuro sobre la imagen */}
 			{overlay && (
-				<View
-					style={[
-						styles.overlay,
-						{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` },
+				<LinearGradient
+					colors={[
+						`rgba(0, 0, 0, ${overlayOpacity * 0.6})`,
+						`rgba(0, 0, 0, ${overlayOpacity})`,
 					]}
+					style={styles.overlay}
+					start={{ x: 0.5, y: 0 }}
+					end={{ x: 0.5, y: 1 }}
 				/>
 			)}
+			{/* Gradiente de transición hacia el fondo */}
 			{showBottomGradient && (
-				<View style={styles.gradientContainer}>
-					<View
-						style={[
-							styles.gradientStep1,
-							{ backgroundColor: colors.background },
-						]}
-					/>
-					<View
-						style={[
-							styles.gradientStep2,
-							{ backgroundColor: colors.background },
-						]}
-					/>
-					<View
-						style={[
-							styles.gradientStep3,
-							{ backgroundColor: colors.background },
-						]}
-					/>
-				</View>
+				<LinearGradient
+					colors={[
+						'transparent',
+						`${colors.background}40`,
+						`${colors.background}80`,
+						`${colors.background}CC`,
+						colors.background,
+					]}
+					locations={[0, 0.3, 0.5, 0.7, 1]}
+					style={styles.bottomGradient}
+					start={{ x: 0.5, y: 0 }}
+					end={{ x: 0.5, y: 1 }}
+				/>
 			)}
 			{children && <View style={styles.content}>{children}</View>}
 		</View>
@@ -101,36 +100,12 @@ const styles = StyleSheet.create({
 		right: 0,
 		bottom: 0,
 	},
-	gradientContainer: {
+	bottomGradient: {
 		position: 'absolute',
 		bottom: 0,
 		left: 0,
 		right: 0,
-		height: 60,
-	},
-	gradientStep1: {
-		position: 'absolute',
-		bottom: 40,
-		left: 0,
-		right: 0,
-		height: 20,
-		opacity: 0.3,
-	},
-	gradientStep2: {
-		position: 'absolute',
-		bottom: 20,
-		left: 0,
-		right: 0,
-		height: 20,
-		opacity: 0.6,
-	},
-	gradientStep3: {
-		position: 'absolute',
-		bottom: 0,
-		left: 0,
-		right: 0,
-		height: 20,
-		opacity: 1,
+		height: 80,
 	},
 	content: {
 		position: 'absolute',

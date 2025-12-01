@@ -13,7 +13,7 @@ import {
 	addDoc,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { Business, Barber, Service, WeeklySchedule } from '../types'
+import { Business, Barber, Service, WeeklySchedule, User } from '../types'
 
 const DEFAULT_WORKING_HOURS: WeeklySchedule = {
 	monday: { start: '09:00', end: '18:00', isOpen: true },
@@ -164,23 +164,106 @@ export async function updateBusiness(
 	})
 }
 
+// ============= USER OPERATIONS =============
+
+/**
+ * Busca un usuario por email
+ */
+export async function findUserByEmail(email: string): Promise<User | null> {
+	const q = query(
+		collection(db, 'users'),
+		where('email', '==', email.toLowerCase().trim())
+	)
+	
+	const snapshot = await getDocs(q)
+	
+	if (snapshot.empty) return null
+
+	const userDoc = snapshot.docs[0]
+	const data = userDoc.data()
+	return {
+		id: userDoc.id,
+		email: data.email,
+		name: data.name,
+		phone: data.phone,
+		photoUrl: data.photoUrl,
+		role: data.role,
+		businessId: data.businessId,
+		createdAt: data.createdAt?.toDate() || new Date(),
+		updatedAt: data.updatedAt?.toDate() || new Date(),
+	}
+}
+
 // ============= BARBER OPERATIONS =============
+
+/**
+ * Busca un barbero pendiente de vinculación por email en todas las barberías
+ * @returns El barbero y el businessId si existe, null si no
+ */
+export async function findPendingBarberByEmail(
+	email: string
+): Promise<{ barber: Barber; businessId: string } | null> {
+	// Primero obtener todas las barberías activas
+	const businessesQuery = query(
+		collection(db, 'businesses'),
+		where('subscriptionStatus', 'in', ['active', 'trial'])
+	)
+	
+	const businessesSnapshot = await getDocs(businessesQuery)
+	
+	// Buscar en cada barbería si hay un barbero con ese email pendiente
+	for (const businessDoc of businessesSnapshot.docs) {
+		const barbersQuery = query(
+			collection(db, 'businesses', businessDoc.id, 'barbers'),
+			where('email', '==', email.toLowerCase().trim()),
+			where('isLinked', '==', false),
+			where('isActive', '==', true)
+		)
+		
+		const barbersSnapshot = await getDocs(barbersQuery)
+		
+		if (!barbersSnapshot.empty) {
+			const barberDoc = barbersSnapshot.docs[0]
+			const data = barberDoc.data()
+			
+			return {
+				barber: {
+					id: barberDoc.id,
+					businessId: businessDoc.id,
+					userId: data.userId || '',
+					name: data.name,
+					email: data.email,
+					photoUrl: data.photoUrl,
+					specialties: data.specialties || [],
+					isActive: data.isActive,
+					isLinked: data.isLinked || false,
+					createdAt: data.createdAt?.toDate() || new Date(),
+				},
+				businessId: businessDoc.id,
+			}
+		}
+	}
+	
+	return null
+}
 
 /**
  * Adds a barber to a business
  */
 export async function addBarber(
 	businessId: string,
-	data: Pick<Barber, 'userId' | 'name' | 'specialties'>
+	data: Pick<Barber, 'userId' | 'name' | 'specialties'> & { email?: string }
 ): Promise<Barber> {
 	const barberRef = await addDoc(
 		collection(db, 'businesses', businessId, 'barbers'),
 		{
-			userId: data.userId,
+			userId: data.userId || '',
 			name: data.name,
+			email: data.email?.toLowerCase().trim() || '',
 			specialties: data.specialties,
 			businessId,
 			isActive: true,
+			isLinked: !!data.userId,
 			createdAt: serverTimestamp(),
 		}
 	)
@@ -188,10 +271,12 @@ export async function addBarber(
 	return {
 		id: barberRef.id,
 		businessId,
-		userId: data.userId,
+		userId: data.userId || '',
 		name: data.name,
+		email: data.email?.toLowerCase().trim(),
 		specialties: data.specialties,
 		isActive: true,
+		isLinked: !!data.userId,
 		createdAt: new Date(),
 	}
 }
@@ -212,11 +297,13 @@ export async function getBarbers(businessId: string): Promise<Barber[]> {
 		return {
 			id: doc.id,
 			businessId: data.businessId,
-			userId: data.userId,
+			userId: data.userId || '',
 			name: data.name,
+			email: data.email,
 			photoUrl: data.photoUrl,
 			specialties: data.specialties || [],
 			isActive: data.isActive,
+			isLinked: data.isLinked || false,
 			createdAt: data.createdAt?.toDate() || new Date(),
 		}
 	})
@@ -228,20 +315,98 @@ export async function getBarbers(businessId: string): Promise<Barber[]> {
 export async function updateBarber(
 	businessId: string,
 	barberId: string,
-	data: Partial<Pick<Barber, 'name' | 'photoUrl' | 'specialties' | 'isActive'>>
+	data: Partial<Pick<Barber, 'name' | 'photoUrl' | 'specialties' | 'isActive' | 'email'>>
 ): Promise<void> {
-	await updateDoc(doc(db, 'businesses', businessId, 'barbers', barberId), data)
+	const updateData: Record<string, unknown> = { ...data }
+	if (data.email) {
+		updateData.email = data.email.toLowerCase().trim()
+	}
+	await updateDoc(doc(db, 'businesses', businessId, 'barbers', barberId), updateData)
 }
 
 /**
- * Deletes (deactivates) a barber
+ * Vincula un barbero con un usuario existente
+ */
+export async function linkBarberToUser(
+	businessId: string,
+	barberId: string,
+	userId: string
+): Promise<void> {
+	// Actualizar el documento del barbero
+	await updateDoc(doc(db, 'businesses', businessId, 'barbers', barberId), {
+		userId,
+		isLinked: true,
+	})
+
+	// Actualizar el rol del usuario a barbero y asignar el businessId
+	await updateDoc(doc(db, 'users', userId), {
+		role: 'barber',
+		businessId,
+		updatedAt: serverTimestamp(),
+	})
+}
+
+/**
+ * Desvincula un barbero de su cuenta de usuario
+ */
+export async function unlinkBarber(
+	businessId: string,
+	barberId: string
+): Promise<void> {
+	// Obtener el barbero para saber el userId
+	const barberDoc = await getDoc(doc(db, 'businesses', businessId, 'barbers', barberId))
+	
+	if (!barberDoc.exists()) {
+		throw new Error('Barbero no encontrado')
+	}
+
+	const barberData = barberDoc.data()
+	const userId = barberData.userId
+
+	// Actualizar el documento del barbero
+	await updateDoc(doc(db, 'businesses', businessId, 'barbers', barberId), {
+		userId: '',
+		isLinked: false,
+	})
+
+	// Si había un usuario vinculado, revertir su rol a customer
+	if (userId) {
+		await updateDoc(doc(db, 'users', userId), {
+			role: 'customer',
+			businessId: null,
+			updatedAt: serverTimestamp(),
+		})
+	}
+}
+
+/**
+ * Deletes (deactivates) a barber and unlinks the user if linked
  */
 export async function deleteBarber(
 	businessId: string,
 	barberId: string
 ): Promise<void> {
+	// Obtener el barbero para verificar si está vinculado
+	const barberDoc = await getDoc(doc(db, 'businesses', businessId, 'barbers', barberId))
+	
+	if (barberDoc.exists()) {
+		const barberData = barberDoc.data()
+		
+		// Si está vinculado a un usuario, revertir su rol
+		if (barberData.isLinked && barberData.userId) {
+			await updateDoc(doc(db, 'users', barberData.userId), {
+				role: 'customer',
+				businessId: null,
+				updatedAt: serverTimestamp(),
+			})
+		}
+	}
+
+	// Desactivar el barbero
 	await updateDoc(doc(db, 'businesses', businessId, 'barbers', barberId), {
 		isActive: false,
+		isLinked: false,
+		userId: '',
 	})
 }
 

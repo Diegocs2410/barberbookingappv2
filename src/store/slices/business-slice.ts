@@ -100,7 +100,7 @@ export const fetchBarbers = createAsyncThunk(
 export const addBarber = createAsyncThunk(
 	'business/addBarber',
 	async (
-		{ businessId, data }: { businessId: string; data: Pick<Barber, 'userId' | 'name' | 'specialties'> },
+		{ businessId, data }: { businessId: string; data: Pick<Barber, 'userId' | 'name' | 'specialties'> & { email?: string } },
 		{ rejectWithValue }
 	) => {
 		try {
@@ -116,7 +116,7 @@ export const addBarber = createAsyncThunk(
 export const updateBarber = createAsyncThunk(
 	'business/updateBarber',
 	async (
-		{ businessId, barberId, data }: { businessId: string; barberId: string; data: Partial<Pick<Barber, 'name' | 'photoUrl' | 'specialties' | 'isActive'>> },
+		{ businessId, barberId, data }: { businessId: string; barberId: string; data: Partial<Pick<Barber, 'name' | 'photoUrl' | 'specialties' | 'isActive' | 'email'>> },
 		{ rejectWithValue }
 	) => {
 		try {
@@ -124,6 +124,38 @@ export const updateBarber = createAsyncThunk(
 			return { barberId, data }
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Failed to update barber'
+			return rejectWithValue(message)
+		}
+	}
+)
+
+export const linkBarber = createAsyncThunk(
+	'business/linkBarber',
+	async (
+		{ businessId, barberId, userId }: { businessId: string; barberId: string; userId: string },
+		{ rejectWithValue }
+	) => {
+		try {
+			await businessService.linkBarberToUser(businessId, barberId, userId)
+			return { barberId, userId }
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Failed to link barber'
+			return rejectWithValue(message)
+		}
+	}
+)
+
+export const unlinkBarber = createAsyncThunk(
+	'business/unlinkBarber',
+	async (
+		{ businessId, barberId }: { businessId: string; barberId: string },
+		{ rejectWithValue }
+	) => {
+		try {
+			await businessService.unlinkBarber(businessId, barberId)
+			return { barberId }
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Failed to unlink barber'
 			return rejectWithValue(message)
 		}
 	}
@@ -313,6 +345,30 @@ const businessSlice = createSlice({
 		// Delete barber
 		builder.addCase(deleteBarber.fulfilled, (state, action) => {
 			state.barbers = state.barbers.filter((b) => b.id !== action.payload)
+		})
+
+		// Link barber
+		builder.addCase(linkBarber.fulfilled, (state, action) => {
+			const index = state.barbers.findIndex((b) => b.id === action.payload.barberId)
+			if (index !== -1) {
+				state.barbers[index] = {
+					...state.barbers[index],
+					userId: action.payload.userId,
+					isLinked: true,
+				}
+			}
+		})
+
+		// Unlink barber
+		builder.addCase(unlinkBarber.fulfilled, (state, action) => {
+			const index = state.barbers.findIndex((b) => b.id === action.payload.barberId)
+			if (index !== -1) {
+				state.barbers[index] = {
+					...state.barbers[index],
+					userId: '',
+					isLinked: false,
+				}
+			}
 		})
 
 		// Fetch services

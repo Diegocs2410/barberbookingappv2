@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
-import { View, StyleSheet, Pressable } from 'react-native'
+import { View, StyleSheet, Pressable, Alert } from 'react-native'
 import { Text } from 'react-native-paper'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuth, useTranslation, useThemeColors } from '../../src/hooks'
-import { Button, Card } from '../../src/components/ui'
+import { useAuth, useTranslation, useThemeColors, useBusiness } from '../../src/hooks'
+import { Button } from '../../src/components/ui'
 import { spacing, borderRadius } from '../../src/constants/theme'
 import { UserRole } from '../../src/types'
 
@@ -41,16 +41,50 @@ export default function RoleSelectScreen() {
 	const { updateRole, isLoading, user } = useAuth()
 	const { t } = useTranslation()
 	const { colors, isDarkMode } = useThemeColors()
+	const { findPendingBarberByEmail, linkBarber } = useBusiness()
 	const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
+	const [isSearchingBarber, setIsSearchingBarber] = useState(false)
 
 	const handleContinue = async () => {
-		if (!selectedRole) return
+		if (!selectedRole || !user) return
 
 		try {
-			await updateRole(selectedRole)
-			router.replace('/')
+			// Si seleccionó Barbero, buscar si hay un barbero pendiente con su email
+			if (selectedRole === 'barber') {
+				setIsSearchingBarber(true)
+
+				const pendingBarber = await findPendingBarberByEmail(user.email)
+
+				if (pendingBarber) {
+					// Vincular automáticamente
+					await linkBarber(pendingBarber.businessId, pendingBarber.barber.id, user.id)
+					await updateRole('barber', pendingBarber.businessId)
+
+					Alert.alert(
+						t('common.success'),
+						t('auth.roleSelect.barberLinkedSuccess'),
+						[{ text: t('common.ok'), onPress: () => router.replace('/') }]
+					)
+				} else {
+					// No hay barbero pendiente, mostrar mensaje explicativo
+					setIsSearchingBarber(false)
+					Alert.alert(
+						t('auth.roleSelect.barberNotLinkedTitle'),
+						t('auth.roleSelect.barberNotLinkedMessage'),
+						[{ text: t('common.ok') }]
+					)
+					return
+				}
+			} else {
+				// Para otros roles, continuar normalmente
+				await updateRole(selectedRole)
+				router.replace('/')
+			}
 		} catch (err) {
 			console.error('Error updating role:', err)
+			Alert.alert(t('common.error'), t('errors.generic'))
+		} finally {
+			setIsSearchingBarber(false)
 		}
 	}
 
@@ -133,10 +167,12 @@ export default function RoleSelectScreen() {
 				<View style={styles.footer}>
 					<Button
 						onPress={handleContinue}
-						loading={isLoading}
-						disabled={!selectedRole || isLoading}
+						loading={isLoading || isSearchingBarber}
+						disabled={!selectedRole || isLoading || isSearchingBarber}
 					>
-						{t('auth.roleSelect.continueButton')}
+						{isSearchingBarber
+							? t('auth.roleSelect.barberSearching')
+							: t('auth.roleSelect.continueButton')}
 					</Button>
 				</View>
 			</View>

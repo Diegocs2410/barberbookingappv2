@@ -27,7 +27,12 @@ export default function DashboardScreen() {
 	const { colors, isDarkMode } = useThemeColors()
 	const { t } = useTranslation()
 
-	const QUICK_ACTIONS: QuickAction[] = [
+	// Detectar si es barbero o owner
+	const isBarber = user?.role === 'barber'
+	const isOwner = user?.role === 'owner'
+
+	// Acciones rápidas solo para owners
+	const QUICK_ACTIONS: QuickAction[] = isOwner ? [
 		{
 			title: t('owner.services.title'),
 			icon: 'cut-outline',
@@ -43,8 +48,9 @@ export default function DashboardScreen() {
 			icon: 'settings-outline',
 			route: '/(app)/(owner)/settings',
 		},
-	]
-	const { currentBusiness, loadOwnerBusiness, services, barbers, loadServices, loadBarbers } =
+	] : []
+
+	const { currentBusiness, loadOwnerBusiness, loadBusiness, services, barbers, loadServices, loadBarbers } =
 		useBusiness()
 	const { bookings, isLoading, loadBusinessBookings, confirmBooking, completeBooking } = useBooking()
 
@@ -59,9 +65,15 @@ export default function DashboardScreen() {
 
 	useEffect(() => {
 		if (user?.id) {
-			loadOwnerBusiness(user.id)
+			if (isBarber && user.businessId) {
+				// Barbero: cargar el negocio por ID
+				loadBusiness(user.businessId)
+			} else if (isOwner) {
+				// Owner: buscar su negocio
+				loadOwnerBusiness(user.id)
+			}
 		}
-	}, [user?.id])
+	}, [user?.id, user?.businessId, isBarber, isOwner])
 
 	useEffect(() => {
 		if (currentBusiness?.id) {
@@ -79,12 +91,21 @@ export default function DashboardScreen() {
 		setRefreshing(false)
 	}
 
+	// Encontrar el barberId del usuario actual (si es barbero)
+	const currentBarber = isBarber 
+		? barbers.find((b) => b.userId === user?.id)
+		: null
+
 	const todayBookings = bookings.filter((b) => {
 		const today = new Date()
-		return (
-			b.dateTime.toDateString() === today.toDateString() &&
-			b.status !== 'cancelled'
-		)
+		const isToday = b.dateTime.toDateString() === today.toDateString() && b.status !== 'cancelled'
+		
+		// Si es barbero, solo mostrar sus citas
+		if (isBarber && currentBarber) {
+			return isToday && b.barberId === currentBarber.id
+		}
+		
+		return isToday
 	})
 
 	const pendingBookings = todayBookings.filter((b) => b.status === 'pending')
@@ -171,6 +192,34 @@ export default function DashboardScreen() {
 	}
 
 	if (!currentBusiness) {
+		// Para barberos sin negocio vinculado, mostrar mensaje diferente
+		if (isBarber) {
+			return (
+				<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+					<HeroImage
+						source={HERO_IMAGES.ownerDashboard}
+						height={280}
+						overlayOpacity={0.5}
+					>
+						<View style={styles.heroSetupContent}>
+							<View style={[styles.setupIconContainer, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+								<Ionicons
+									name="cut-outline"
+									size={48}
+									color="#ffffff"
+								/>
+							</View>
+							<Text style={styles.heroSetupTitle}>{t('auth.roleSelect.barberNotLinkedTitle')}</Text>
+							<Text style={styles.heroSetupSubtitle}>
+								{t('auth.roleSelect.barberNotLinkedMessage')}
+							</Text>
+						</View>
+					</HeroImage>
+				</SafeAreaView>
+			)
+		}
+
+		// Para owners sin negocio, mostrar setup
 		return (
 			<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
 				<HeroImage
@@ -260,32 +309,34 @@ export default function DashboardScreen() {
 					</View>
 				</View>
 
-				{/* Quick Actions */}
-				<View style={styles.section}>
-					<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('owner.dashboard.quickActions')}</Text>
-					<View style={styles.actionsGrid}>
-						{QUICK_ACTIONS.map((action) => (
-							<Pressable
-								key={action.title}
-								style={({ pressed }) => [
-									styles.actionCard,
-									{ backgroundColor: colors.surface, borderColor: colors.border },
-									pressed && styles.actionCardPressed,
-								]}
-								onPress={() => router.push(action.route as any)}
-							>
-								<View style={[styles.actionIcon, { backgroundColor: colors.surfaceVariant }]}>
-									<Ionicons
-										name={action.icon}
-										size={24}
-										color={colors.textPrimary}
-									/>
-								</View>
-								<Text style={[styles.actionTitle, { color: colors.textPrimary }]}>{action.title}</Text>
-							</Pressable>
-						))}
+				{/* Quick Actions - Solo para owners */}
+				{QUICK_ACTIONS.length > 0 && (
+					<View style={styles.section}>
+						<Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('owner.dashboard.quickActions')}</Text>
+						<View style={styles.actionsGrid}>
+							{QUICK_ACTIONS.map((action) => (
+								<Pressable
+									key={action.title}
+									style={({ pressed }) => [
+										styles.actionCard,
+										{ backgroundColor: colors.surface, borderColor: colors.border },
+										pressed && styles.actionCardPressed,
+									]}
+									onPress={() => router.push(action.route as any)}
+								>
+									<View style={[styles.actionIcon, { backgroundColor: colors.surfaceVariant }]}>
+										<Ionicons
+											name={action.icon}
+											size={24}
+											color={colors.textPrimary}
+										/>
+									</View>
+									<Text style={[styles.actionTitle, { color: colors.textPrimary }]}>{action.title}</Text>
+								</Pressable>
+							))}
+						</View>
 					</View>
-				</View>
+				)}
 
 				{/* Today's Schedule */}
 				<View style={styles.section}>

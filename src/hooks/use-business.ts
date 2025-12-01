@@ -10,13 +10,16 @@ import {
 	addBarber as addBarberAction,
 	updateBarber as updateBarberAction,
 	deleteBarber as deleteBarberAction,
+	linkBarber as linkBarberAction,
+	unlinkBarber as unlinkBarberAction,
 	fetchServices,
 	addService as addServiceAction,
 	updateService as updateServiceAction,
 	deleteService as deleteServiceAction,
 	setCurrentBusiness,
 } from '../store/slices/business-slice'
-import { Business, Barber, Service } from '../types'
+import { Business, Barber, Service, User } from '../types'
+import * as businessService from '../services/business-service'
 
 export function useBusiness() {
 	const dispatch = useAppDispatch()
@@ -77,10 +80,26 @@ export function useBusiness() {
 		[dispatch]
 	)
 
+	// Buscar usuario por email
+	const findUserByEmail = useCallback(
+		async (email: string): Promise<User | null> => {
+			return businessService.findUserByEmail(email)
+		},
+		[]
+	)
+
+	// Buscar barbero pendiente por email
+	const findPendingBarberByEmail = useCallback(
+		async (email: string) => {
+			return businessService.findPendingBarberByEmail(email)
+		},
+		[]
+	)
+
 	const addBarber = useCallback(
 		async (
 			businessId: string,
-			data: Pick<Barber, 'userId' | 'name' | 'specialties'>
+			data: Pick<Barber, 'userId' | 'name' | 'specialties'> & { email?: string }
 		) => {
 			return dispatch(addBarberAction({ businessId, data })).unwrap()
 		},
@@ -91,7 +110,7 @@ export function useBusiness() {
 		async (
 			businessId: string,
 			barberId: string,
-			data: Partial<Pick<Barber, 'name' | 'photoUrl' | 'specialties' | 'isActive'>>
+			data: Partial<Pick<Barber, 'name' | 'photoUrl' | 'specialties' | 'isActive' | 'email'>>
 		) => {
 			return dispatch(
 				updateBarberAction({ businessId, barberId, data })
@@ -103,6 +122,22 @@ export function useBusiness() {
 	const removeBarber = useCallback(
 		async (businessId: string, barberId: string) => {
 			return dispatch(deleteBarberAction({ businessId, barberId })).unwrap()
+		},
+		[dispatch]
+	)
+
+	// Vincular barbero con usuario existente
+	const linkBarber = useCallback(
+		async (businessId: string, barberId: string, userId: string) => {
+			return dispatch(linkBarberAction({ businessId, barberId, userId })).unwrap()
+		},
+		[dispatch]
+	)
+
+	// Desvincular barbero
+	const unlinkBarber = useCallback(
+		async (businessId: string, barberId: string) => {
+			return dispatch(unlinkBarberAction({ businessId, barberId })).unwrap()
 		},
 		[dispatch]
 	)
@@ -165,6 +200,10 @@ export function useBusiness() {
 		addBarber,
 		updateBarber,
 		removeBarber,
+		findUserByEmail,
+		findPendingBarberByEmail,
+		linkBarber,
+		unlinkBarber,
 		// Service operations
 		loadServices,
 		addService,

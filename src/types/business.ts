@@ -34,9 +34,11 @@ export interface Barber {
 	userId: string
 	businessId: string
 	name: string
+	email?: string
 	photoUrl?: string | null
 	specialties: string[]
 	isActive: boolean
+	isLinked: boolean
 	createdAt: Date
 }
 

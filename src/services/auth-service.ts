@@ -242,3 +242,42 @@ export function onAuthChange(
 	return onAuthStateChanged(auth, callback)
 }
 
+/**
+ * Migra usuarios con rol 'barber' a 'customer'
+ * Esta función se usa una sola vez para migrar datos existentes
+ */
+export async function migrateBarberUsersToCustomers(): Promise<number> {
+	const { collection, query, where, getDocs, updateDoc, doc: docRef, serverTimestamp: srvTimestamp } = await import('firebase/firestore')
+	
+	const q = query(
+		collection(db, 'users'),
+		where('role', '==', 'barber')
+	)
+	
+	const snapshot = await getDocs(q)
+	
+	if (snapshot.empty) {
+		console.log('No hay usuarios con rol barber para migrar')
+		return 0
+	}
+
+	let migratedCount = 0
+	
+	for (const userDoc of snapshot.docs) {
+		try {
+			await updateDoc(docRef(db, 'users', userDoc.id), {
+				role: 'customer',
+				businessId: null,
+				updatedAt: srvTimestamp(),
+			})
+			migratedCount++
+			console.log(`Usuario migrado: ${userDoc.id}`)
+		} catch (error) {
+			console.error(`Error al migrar usuario ${userDoc.id}:`, error)
+		}
+	}
+
+	console.log(`Migración completada: ${migratedCount} usuarios migrados`)
+	return migratedCount
+}
+
