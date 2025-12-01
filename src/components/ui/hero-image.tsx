@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Image, StyleSheet, ImageSourcePropType } from 'react-native'
+import { useThemeColors } from '../../hooks'
 
 /**
  * Props para el componente HeroImage
@@ -17,6 +18,8 @@ interface Props {
 	overlay?: boolean
 	/** Intensidad del overlay (0-1) */
 	overlayOpacity?: number
+	/** Mostrar gradiente inferior para transición al fondo */
+	showBottomGradient?: boolean
 }
 
 /**
@@ -30,7 +33,10 @@ export function HeroImage({
 	style,
 	overlay = true,
 	overlayOpacity = 0.4,
+	showBottomGradient = true,
 }: Props) {
+	const { colors } = useThemeColors()
+
 	const imageSource = typeof source === 'string' ? { uri: source } : source
 
 	return (
@@ -47,6 +53,28 @@ export function HeroImage({
 						{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` },
 					]}
 				/>
+			)}
+			{showBottomGradient && (
+				<View style={styles.gradientContainer}>
+					<View
+						style={[
+							styles.gradientStep1,
+							{ backgroundColor: colors.background },
+						]}
+					/>
+					<View
+						style={[
+							styles.gradientStep2,
+							{ backgroundColor: colors.background },
+						]}
+					/>
+					<View
+						style={[
+							styles.gradientStep3,
+							{ backgroundColor: colors.background },
+						]}
+					/>
+				</View>
 			)}
 			{children && <View style={styles.content}>{children}</View>}
 		</View>
@@ -72,6 +100,37 @@ const styles = StyleSheet.create({
 		left: 0,
 		right: 0,
 		bottom: 0,
+	},
+	gradientContainer: {
+		position: 'absolute',
+		bottom: 0,
+		left: 0,
+		right: 0,
+		height: 60,
+	},
+	gradientStep1: {
+		position: 'absolute',
+		bottom: 40,
+		left: 0,
+		right: 0,
+		height: 20,
+		opacity: 0.3,
+	},
+	gradientStep2: {
+		position: 'absolute',
+		bottom: 20,
+		left: 0,
+		right: 0,
+		height: 20,
+		opacity: 0.6,
+	},
+	gradientStep3: {
+		position: 'absolute',
+		bottom: 0,
+		left: 0,
+		right: 0,
+		height: 20,
+		opacity: 1,
 	},
 	content: {
 		position: 'absolute',

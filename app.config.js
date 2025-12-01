@@ -17,6 +17,9 @@ export default {
             googleClientIdWeb: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB,
             googleClientIdIos: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
             googleClientIdAndroid: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID,
+            eas: {
+                projectId: '51342d61-7735-4d29-80a0-3277e1ad23c4'
+            }
         },
         splash: {
             image: './assets/splash-icon.png',
@@ -26,6 +29,16 @@ export default {
         ios: {
             supportsTablet: true,
             bundleIdentifier: 'com.barberbooking.app',
+            infoPlist: {
+                ITSAppUsesNonExemptEncryption: false,
+                CFBundleURLTypes: [
+                    {
+                        CFBundleURLSchemes: [
+                            process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME
+                        ]
+                    }
+                ]
+            }
         },
         android: {
             adaptiveIcon: {
